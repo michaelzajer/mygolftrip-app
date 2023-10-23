@@ -1,5 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom"
+import { getAuth } from "firebase/auth";
 export default function Header() {
+    const auth = getAuth();
     const location = useLocation()
     const navigate = useNavigate()
     function pathMatchRoute(route){
@@ -7,6 +9,10 @@ export default function Header() {
             return true
         }
     }
+    function onLogout(){
+        auth.signOut();
+        navigate('/');
+      }
   return (
     <div className='bg-white border-b shadow-sm sticky top-o z-50'>
         <header className='flex justify-between items-center
@@ -49,6 +55,12 @@ export default function Header() {
                         ${pathMatchRoute("/sign-in") && "text-black border-b-green-300"}`}
                         onClick={()=>navigate("/sign-in")} 
                         >Sign In</li>
+                    <li className={`cursor-pointer py-3 text-sm font-semibold
+                        text-grey-400 border-b-[3px]
+                        border-b-transparent
+                        ${pathMatchRoute("/sign-in") && "text-black border-b-green-300"}`}
+                        onClick={onLogout}
+                        >Sign Out</li>
                 </ul>
             </div>
         </header>
