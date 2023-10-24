@@ -1,18 +1,26 @@
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom"
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+
 export default function Header() {
-    const auth = getAuth();
+    const [pageState, setPageState] = useState("Sign In");
     const location = useLocation()
     const navigate = useNavigate()
+    const auth = getAuth();
+    useEffect (()=>{
+        onAuthStateChanged(auth, (user)=>{
+            if(user){
+                setPageState('Profile')
+            }else{
+                setPageState('Sign in')
+            }
+        })
+    }, [auth])
     function pathMatchRoute(route){
         if(route === location.pathname){
             return true
         }
     }
-    function onLogout(){
-        auth.signOut();
-        navigate('/');
-      }
   return (
     <div className='bg-white border-b shadow-sm sticky top-o z-50'>
         <header className='flex justify-between items-center
@@ -52,15 +60,13 @@ export default function Header() {
                     <li className={`cursor-pointer py-3 text-sm font-semibold
                         text-grey-400 border-b-[3px]
                         border-b-transparent
-                        ${pathMatchRoute("/sign-in") && "text-black border-b-green-300"}`}
-                        onClick={()=>navigate("/sign-in")} 
-                        >Sign In</li>
-                    <li className={`cursor-pointer py-3 text-sm font-semibold
-                        text-grey-400 border-b-[3px]
-                        border-b-transparent
-                        ${pathMatchRoute("/sign-in") && "text-black border-b-green-300"}`}
-                        onClick={onLogout}
-                        >Sign Out</li>
+                        ${
+                            (pathMatchRoute("/sign-in") || pathMatchRoute("/profile")) 
+                            && "text-black border-b-green-300"}`}
+                        onClick={()=>navigate("/profile")} 
+                    >
+                           {pageState}
+                    </li>
                 </ul>
             </div>
         </header>
