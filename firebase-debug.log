@@ -65,3 +65,6 @@ You're about to initialize a Firebase project in this directory:
 [debug] [2023-11-09T22:30:04.746Z] >>> [apiv2][query] GET https://api.github.com/repos/michaelzajer/mygolftrip-app/actions/secrets/public-key type=owner
 [debug] [2023-11-09T22:30:05.078Z] <<< [apiv2][status] GET https://api.github.com/repos/michaelzajer/mygolftrip-app/actions/secrets/public-key 401
 [debug] [2023-11-09T22:30:05.078Z] <<< [apiv2][body] GET https://api.github.com/repos/michaelzajer/mygolftrip-app/actions/secrets/public-key {"message":"Bad credentials","documentation_url":"https://docs.github.com/rest"}
+[debug] [2023-11-09T22:34:25.791Z] >>> [apiv2][query] GET https://api.github.com/repos/michaelzajer/mygolftrip-app/actions/secrets/public-key type=owner
+[debug] [2023-11-09T22:34:26.136Z] <<< [apiv2][status] GET https://api.github.com/repos/michaelzajer/mygolftrip-app/actions/secrets/public-key 401
+[debug] [2023-11-09T22:34:26.136Z] <<< [apiv2][body] GET https://api.github.com/repos/michaelzajer/mygolftrip-app/actions/secrets/public-key {"message":"Bad credentials","documentation_url":"https://docs.github.com/rest"}
