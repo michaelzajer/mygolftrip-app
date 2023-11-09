@@ -12,9 +12,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import PrivateRoute from "./components/PrivateRoute";
 import Admin from "./pages/Admin";
 import CreateGolfer from "./pages/CreateGolfer";
+import CreateListing from "./pages/CreateListing";
+import CreateTrip from "./pages/CreateTrip";
 
 function App() {
   return (
+
     <>
       <Router>
         <Header/>
@@ -31,11 +34,12 @@ function App() {
           <Route path="/leaderboard" element={<PrivateRoute/>}>
             <Route path="/leaderboard" element={<Leaderboard />} />
           </Route>
-          <Route path="/admin" element={<PrivateRoute/>}>
-            <Route path="/admin" element={<Admin/>} />
+          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
+          <Route path="" element={<CreateTrip/>} />
           </Route>
           <Route path="/create-golfer" element={<CreateGolfer />}>
           </Route>
+          <Route path="/createlisting" element={<CreateListing/>} />
           <Route path="/ForgotPassword" element={<ForgotPassword/>} />
           
         </Routes>
@@ -53,6 +57,7 @@ function App() {
       theme="dark"
        />
     </>
+ 
   );
 }
 

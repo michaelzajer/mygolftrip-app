@@ -4,15 +4,21 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 export default function Header() {
     const [pageState, setPageState] = useState("Sign In");
+    const [isAdmin, setIsAdmin] = useState(false);
     const location = useLocation()
     const navigate = useNavigate()
     const auth = getAuth();
+
+    const ADMIN_USER_ID = "orGREHRCTCgFgfeijAcxIFjN8TC3"; // Replace with your admin user ID
+
     useEffect (()=>{
         onAuthStateChanged(auth, (user)=>{
             if(user){
-                setPageState('Profile')
+                setPageState('Profile');
+                setIsAdmin(user.uid === ADMIN_USER_ID); // Set isAdmin based on whether the user is admin
             }else{
-                setPageState('Sign in')
+                setPageState('Sign in');
+                setIsAdmin(false); // Not logged in, so definitely not admin
             }
         })
     }, [auth])
@@ -51,12 +57,14 @@ export default function Header() {
                         ${pathMatchRoute("/leaderboard") && "text-black border-b-green-300"}`}
                         onClick={()=>navigate("/leaderboard")} 
                         >Leaderboard</li>
-                    <li className={`cursor-pointer py-3 text-sm font-semibold
-                        text-grey-400 border-b-[3px]
-                        border-b-transparent
-                        ${pathMatchRoute("/admin") && "text-black border-b-green-300"}`}
-                        onClick={()=>navigate("/admin")} 
-                        >Admin</li>
+                    {isAdmin && ( // This will only render if isAdmin is true
+                        <li className={`cursor-pointer py-3 text-sm font-semibold
+                            text-grey-400 border-b-[3px]
+                            border-b-transparent
+                            ${pathMatchRoute("/admin") && "text-black border-b-green-300"}`}
+                            onClick={()=>navigate("/admin")} 
+                            >Admin</li>
+                    )}
                     <li className={`cursor-pointer py-3 text-sm font-semibold
                         text-grey-400 border-b-[3px]
                         border-b-transparent

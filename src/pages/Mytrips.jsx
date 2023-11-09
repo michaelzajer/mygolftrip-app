@@ -1,128 +1,217 @@
-import { useEffect, useState } from "react"
-import Spinner from "../components/Spinner";
-import { toast } from "react-toastify";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebase';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { getAuth } from "firebase/auth";
-import { v4 as uuidv4 } from 'uuid';
-import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, where } from "firebase/firestore";
-import { db } from "../firebase";
-import { Link, useNavigate } from "react-router-dom";
 import GolferItem from "../components/GolferItem";
 
-export default function MyTrips() {
+const MyTrips = () => {
+  const [myTrips, setMyTrips] = useState([]);
+  const [editState, setEditState] = useState({});
   const auth = getAuth();
-  const navigate = useNavigate();
-  const [golfers, setGolfers] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const golferId = auth.currentUser?.uid;
 
   useEffect(() => {
-    async function fetchGolferListings() {
-      const golferRef = collection(db, "golfers");
-      const q = query(
-        golferRef,
-        where("golferRef", "==", auth.currentUser.uid),
-        orderBy("timestamp", "desc")
-      );
-      const querySnap = await getDocs(q);
-      let golfers = [];
-      querySnap.forEach((doc) => {
-        return golfers.push({
-          id: doc.id,
-          data: doc.data(),
-        });
-      });
-      setGolfers(golfers);
-      setLoading(false);
-      console.log(golfers)
+    const fetchMyTrips = async () => {
+      if (!golferId) return;
+
+      let tripsData = [];
+      const tripsSnapshot = await getDocs(collection(db, "golfTrips"));
       
-    }
-    fetchGolferListings();
-  }, [auth.currentUser.uid]);
+      for (const tripDoc of tripsSnapshot.docs) {
+        const groupsSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups`));
+        
+        for (const groupDoc of groupsSnapshot.docs) {
+          const golfersSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/golfers`));
+          const golfers = golfersSnapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
+
+          const isGolferInGroup = golfers.some(golfer => golfer.golferRef === golferId);
+          
+          if (isGolferInGroup) {
+            tripsData.push({
+              ...tripDoc.data(),
+              id: tripDoc.id,
+              groups: {
+                ...groupDoc.data(),
+                id: groupDoc.id,
+                golfers
+              }
+            });
+          }
+        }
+      }
+
+      // Sort the trips by date (ensure your dates are in a format that can be sorted)
+      tripsData.sort((a, b) => new Date(a.groups.groupDate) - new Date(b.groups.groupDate));
+
+      setMyTrips(tripsData);
+    };
+
+    fetchMyTrips();
+  }, [golferId]);
+
+  const handleScoreChange = (tripId, groupId, golferId, value) => {
+    setEditState(prevState => ({
+      ...prevState,
+      [`${tripId}-${groupId}-${golferId}`]: {
+        ...prevState[`${tripId}-${groupId}-${golferId}`],
+        score: value
+      }
+    }));
+  };
+
+  const handleHcpChange = (tripId, groupId, golferId, value) => {
+    setEditState(prevState => ({
+      ...prevState,
+      [`${tripId}-${groupId}-${golferId}`]: {
+        ...prevState[`${tripId}-${groupId}-${golferId}`],
+        dailyHcp: value
+      }
+    }));
+  };
+
+  const handleEditClick = (tripId, groupId, golfer) => {
+    setEditState({
+      ...editState,
+      [`${tripId}-${groupId}-${golfer.golferRef}`]: golfer
+    });
+  };
+
+  const handleSave = async (tripId, groupId, golfer) => {
+    const golferRef = golfer.golferRef;
+    const updatedData = editState[`${tripId}-${groupId}-${golferRef}`];
+  
+    // Update the Firestore document
+    const golferDocRef = doc(db, `golfTrips/${tripId}/groups/${groupId}/golfers`, golferRef);
+    await updateDoc(golferDocRef, updatedData);
+  
+    // Clear the edit state for this golfer
+    const newEditState = {...editState};
+    delete newEditState[`${tripId}-${groupId}-${golferRef}`];
+    setEditState(newEditState);
+  
+    // Update local state
+    setMyTrips(prevTrips => {
+      return prevTrips.map(trip => {
+        if (trip.id === tripId) {
+          return {
+            ...trip,
+            groups: trip.groups.id === groupId ? {
+              ...trip.groups,
+              golfers: trip.groups.golfers.map(g => {
+                if (g.golferRef === golferRef) {
+                  return {...g, ...updatedData};
+                }
+                return g;
+              })
+            } : trip.groups
+          };
+        }
+        return trip;
+      });
+    });
+  };
+  
 
   return (
-    <section>
-      <div className="flex justify-center flex-wrap items-center px-6 py-12 max-w-6xl mx-auto">
-        <div className="md:w-[67%] lg:w-[50%] mb-12 md:mb-6 bg-blue-100">
-                {golfers?.map((golfer) => (
-                <GolferItem
-                 key={golfer.id} 
-                 id={golfer.id} 
-                 golfer={golfer.data}
-                 />
-              ))}
-            <div className="sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-              
+    <div className="flex justify-center px-6 py-12">
+      <div className="max-w-7xl w-full mx-auto">
+        <div className="flex flex-col md:flex-row md:items-start gap-8">
+          {/* Left Component */}
+          <div className="flex-shrink-0 w-full md:w-1/3">
+            <GolferItem golferRef={golferId} />
+          </div>
+  
+          {/* My Trips Groups */}
+          <div className="w-full">
+            {myTrips.length > 0 ? (
+              myTrips.map((trip) => (
+                <div key={trip.id} className="mb-4">
+                  {trip.groups && (
+                    <div className="mt-4 bg-white shadow-lg rounded-lg">
+                      {/* Group Header */}
+                      <div className="flex justify-between bg-blue-100 text-white text-center py-2 rounded-t-lg">
+                        {/* Group Date on the Left */}
+                        <h3 className="text-m font-semibold mb-2 px-2 self-center">
+                          {trip.groups.groupDate}
+                        </h3>
+                        {/* Group Name in the Center */}
+                        <h3 className="text-m font-semibold mb-2 flex-grow text-center">
+                          {trip.groups.groupName}
+                        </h3>
+                        <div className="w-1/4"></div> {/* This is to balance the space and keep the group name centered */}
+                      </div>
+                  <div className="grid grid-cols-4 gap-2 p-2 font-medium text-m border-b">
+                    <div>Golfer Name</div>
+                    <div>Daily Handicap</div>
+                    <div>Score</div>
+                    <div>Edit</div>
+                  </div>
+                  {trip.groups.golfers.map((golfer, index) => {
+                    const editKey = `${trip.id}-${trip.groups.id}-${golfer.golferRef}`;
+                    const isEditing = !!editState[editKey];
+                    return (
+                      <div key={golfer.golferRef} className={`grid grid-cols-4 gap-2 items-center p-2 ${index !== trip.groups.golfers.length - 1 ? 'border-b' : ''}`}>
+                        <div>{golfer.golferName}</div>
+                        <div>
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              value={editState[editKey].dailyHcp}
+                              onChange={(e) => handleHcpChange(trip.id, trip.groups.id, golfer.golferRef, e.target.value)}
+                              className="border rounded px-2 py-1 text-sm w-full"
+                            />
+                          ) : (
+                            <span>{golfer.dailyHcp}</span>
+                          )}
+                        </div>
+                        <div>
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              value={editState[editKey].score}
+                              onChange={(e) => handleScoreChange(trip.id, trip.groups.id, golfer.golferRef, e.target.value)}
+                              className="border rounded px-2 py-1 text-sm w-full"
+                            />
+                          ) : (
+                            <span>{golfer.score}</span>
+                          )}
+                        </div>
+                        <div>
+                          {golfer.golferRef === golferId && (
+                            <div className="text-justify">
+                              {isEditing ? (
+                                <button
+                                  className="text-blue-200 hover:text-blue-600"
+                                  onClick={() => handleSave(trip.id, trip.groups.id, golfer)}
+                                >
+                                  Save
+                                </button>
+                              ) : (
+                                <button
+                                  className="text-blue-200 hover:text-blue-600"
+                                  onClick={() => handleEditClick(trip.id, trip.groups.id, golfer)}
+                                >
+                                  Edit
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-        </div>
-        <div className="w-full md:w-[67%] lg:w-[40%] lg:ml-20">
-          <form>
-            <input
-              type="email"
-              id="email" 
-              value={''} 
-              placeholder=''
-              className="mb-6 w-full px-4 py-2 text-xl
-              text-gray-700 bg-white border-gray-300 first-letter
-              rounded transition ease-in-out"  
-            />
-            <div className="relative mb-6">
-            <input
-              type={'' }
-              id="password" 
-              value={''} 
-            
-              placeholder="Password"
-              className="w-full px-4 py-2 text-xl
-              text-gray-700 bg-white border-gray-300 first-letter
-              rounded transition ease-in-out"  
-            />
-            
-            </div>
-            <div className="flex justify-between 
-            whitespace-nowrap text-sm 
-            sm:text-lg">
-              <p className="mb-6">
-                Don't have an account?
-                <Link to="/sign-up"
-                className="text-green-200
-                hover:text-white
-                transition duration-200
-                ease-in-out
-                ml-1">Register</Link>
-              </p>
-              <p>
-                <Link to="/forgotpassword"
-                 className="text-green-200
-                 hover:text-white
-                 transition duration-200
-                 ease-in-out
-                 ml-1">Forgot 
-                Password?</Link>
-              </p>
-            </div>
-            <button className="w-full bg-blue-100
-          text-green-200 px-7 py-3
-          text-sm font-medium uppercase
-          rounded shadow-md hover:bg-green-200
-          hover:text-blue-200
-          transition duration-150 ease-in-out
-          hover:shadow-lg active:bg-blue-200"
-           type="submit"
-           >Sign In
-           </button>
-           <div className="flex
-           items-center my-4 
-           before:border-t before:flex-1
-           before:border-gray-300
-           after:border-t after:flex-1
-           after:border-gray-300
-           ">
-            <p className="text-center
-            font-semibold mx-4">OR</p>
-           </div>
-          </form>
+            ))
+            ) : (
+              <p className="text-gray-500">No trips found or you're not part of any groups.</p>
+            )}
+          </div>
         </div>
       </div>
-    </section>
-  )
-  }
+    </div>
+  );
+};
+
+export default MyTrips;

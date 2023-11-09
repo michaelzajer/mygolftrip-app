@@ -1,28 +1,53 @@
-import Moment from "react-moment";
-import { LiaGolfBallSolid } from 'react-icons/lia'
+import React, { useState, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase'; // Ensure you import your actual firebase config
+import { Link } from 'react-router-dom';
 
-export default function ListingItem({ golfer, id } ) {
-    return (
-    
-    <div className='bg-blue-100 flex flex-col justify-between
-    items-center shadow-md hover:shadow-xl rounded-md overflow-hidden
-        transition-shadow duration-150 ease-in-out'>
-        <div className=''>
-            <p className="text-2xl text-center mt-3 font-bold
-             text-green-300">
-              {golfer.name}
-            </p> 
-            <div className="font-semibold flex">Golf Link No:
-                <div className="font-normal">{golfer.golfLinkNo}</div> 
-            </div>
-            <div className="font-semibold flex">GA Handicap:
-                <div className="font-normal">{golfer.handicapGA}</div>
-            </div>   
-        </div>
-      <Moment fromNow>
-        {golfer.timestamp?.toDate()}
-      </Moment><LiaGolfBallSolid />
-    </div>
-    );
+const GolferItem = ({ golferRef }) => {
+  const [golfer, setGolfer] = useState(null);
+
+  useEffect(() => {
+    const fetchGolfer = async () => {
+      try {
+        const docRef = doc(db, 'golfers', golferRef);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setGolfer(docSnap.data());
+        } else {
+          // doc.data() will be undefined in this case
+          console.log('No such document!');
+        }
+      } catch (error) {
+        console.error("Error fetching golfer data: ", error);
+      }
+    };
+
+    fetchGolfer();
+  }, [golferRef]);
+
+  if (!golfer) {
+    return <div className="text-center">Loading golfer information...</div>;
   }
-  
+
+  return (
+    <div className="bg-blue-100 text-white p-4 rounded-lg text-center">
+      <h1 className="text-md font-bold text-center">{golfer.name}</h1>
+      {/* Wrap the label in a span and apply text color */}
+      <p className='text-md mt-2 text-center'>
+        <span className="text-green-300">Golf Link No:</span> {golfer.golfLinkNo}
+      </p>
+      <p className='text-md mt-2 text-center'>
+        <span className="text-green-300">GA Handicap:</span> {golfer.handicapGA}
+      </p>
+      <Link to="/profile"
+        className="text-white text-md mt-2
+        hover:text-green-200
+        transition duration-200
+        ease-in-out
+        ml-1">Update your profile</Link>
+    </div>
+  );
+};
+
+export default GolferItem;

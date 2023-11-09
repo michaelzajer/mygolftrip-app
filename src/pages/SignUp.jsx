@@ -1,4 +1,4 @@
-import { useState, prevState } from "react";
+import { useState } from "react";
 import {AiFillEyeInvisible, AiFillEye} from "react-icons/ai"
 import { Link } from "react-router-dom";
 import OAuth from "../components/OAuth";
@@ -14,11 +14,12 @@ export default function SignUp() {
     name: "",
     email: "",
     password: "",
+    golfLinkNo: "",
   });
-  const {name, email, password} = formData;
+  const {name, email, password, golfLinkNo} = formData;
   const navigate = useNavigate()
   function onChange(e) {
-    setFormData((prevState)=({
+    setFormData((prevState)=>({
       ...prevState, 
       [e.target.id]: e.target.value,
     }));
@@ -43,6 +44,7 @@ export default function SignUp() {
         const formDataCopy = {...formData}
         delete formDataCopy.password
         formDataCopy.timestamp = serverTimestamp();
+        formDataCopy.golferRef = user.uid;
 
         await setDoc(doc(db, "golfers", 
         user.uid), formDataCopy)
@@ -80,6 +82,16 @@ export default function SignUp() {
               value={email} 
               onChange={onChange}
               placeholder="Email address"
+              className="mb-6 w-full px-4 py-2 text-xl
+              text-gray-700 bg-white border-gray-300 first-letter
+              rounded transition ease-in-out"  
+            />
+            <input
+              type="golfLinkNo"
+              id="golfLinkNo" 
+              value={golfLinkNo} 
+              onChange={onChange}
+              placeholder="GolfLinkNo"
               className="mb-6 w-full px-4 py-2 text-xl
               text-gray-700 bg-white border-gray-300 first-letter
               rounded transition ease-in-out"  

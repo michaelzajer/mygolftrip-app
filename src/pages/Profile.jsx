@@ -4,23 +4,17 @@ import {
   doc, 
   updateDoc, 
   setDoc, 
-  query, 
-  where,
-  orderBy,
-  getDocs,
-  collection,
+getDoc
  } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
-import { FaHome } from 'react-icons/fa';
+import { LiaGolfBallSolid } from 'react-icons/lia'
 import { Link } from "react-router-dom";
-import ListingItem from "../components/ListingItem";
 
 export default function Profile() {
   const auth = getAuth();
   const navigate = useNavigate();
-  const [listings, setListings] = useState(null)
   const [loading, setLoading] = useState(true)
   const [changeDetail, setChangeDetail] = useState(false);
   const [formData, setFormData] = useState({
@@ -65,28 +59,33 @@ export default function Profile() {
     }
   }
   useEffect(() => {
-    async function fetchUserListings() {
-      const listingRef = collection(db, "golfers");
-      const q = query(
-        listingRef,
-        where("golferRef", "==", auth.currentUser.uid),
-        orderBy("timestamp", "desc")
-      );
-
-      const querySnap = await getDocs(q);
-      let listings = [];
-      querySnap.forEach((doc) => {
-        return listings.push({
-          id: doc.id,
-          data: doc.data(),
-        });
-      });
-      setListings(listings);
+    const fetchUserProfile = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, 'golfers', auth.currentUser.uid);
+        const docSnap = await getDoc(docRef);
+  
+        if (docSnap.exists()) {
+          setFormData((prevState) => ({
+            ...prevState,
+            golfLinkNo: docSnap.data().golfLinkNo || '',
+            handicapGA: docSnap.data().handicapGA || '',
+          }));
+        } else {
+          // Handle the case where the document does not exist.
+          console.log('No such document!');
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        // Handle any errors.
+      }
       setLoading(false);
-      console.log(listings)
-    }
-    fetchUserListings();
-  }, [auth.currentUser.uid]);
+    };
+  
+    fetchUserProfile();
+  }, [auth.currentUser.uid]); // Add additional dependencies as needed.
+
+
   return (
     <>
       <section className="max-w-6xl mx-auto flex
@@ -103,7 +102,7 @@ export default function Profile() {
             value={name} 
             disabled={!changeDetail}
             onChange={onChange}
-            className={`mb-6 w-full px-4 py-2 text-xl 
+            className={`mb-6 w-full px-4 py-2 text-m
             text-gray-700 bg-white border border-gray-300
             rounded transition ease-in-out"${changeDetail && 
             "bg-red-200 focus:bg-red-200"}`} />
@@ -113,7 +112,7 @@ export default function Profile() {
             <input type="text" 
             id="email" 
             value={email} disabled
-            className="mb-6 w-full px-4 py-2 text-xl 
+            className="mb-6 w-full px-4 py-2 text-m
             text-gray-700 bg-white border border-gray-300
             rounded transition ease-in-out" />
 
@@ -126,7 +125,7 @@ export default function Profile() {
               disabled={!changeDetail}
               onChange={onChange}
               placeholder="GolfLinkNo"
-              className={`mb-6 w-full px-4 py-2 text-xl 
+              className={`mb-6 w-full px-4 py-2 text-m 
               text-gray-700 bg-white border border-gray-300
               rounded transition ease-in-out"${changeDetail && 
               "bg-red-200 focus:bg-red-200"}`} 
@@ -141,7 +140,7 @@ export default function Profile() {
               disabled={!changeDetail}
               onChange={onChange}
               placeholder="GA handicap"
-              className={`mb-6 w-full px-4 py-2 text-xl 
+              className={`mb-6 w-full px-4 py-2 text-m
               text-gray-700 bg-white border border-gray-300
               rounded transition ease-in-out"${changeDetail && 
               "bg-red-200 focus:bg-red-200"}`} 
@@ -149,7 +148,7 @@ export default function Profile() {
 
             <div 
               className="flex justify-between 
-              whitespace-nowrap text-sm sm:text-lg mb-6">
+              whitespace-nowrap text-m sm:text-m mb-6">
               <p className="flex items-center ">
                 Click to Update Details?
                 <span
@@ -168,49 +167,29 @@ export default function Profile() {
                 onClick={onLogout}
                 className="text-green-100 
                 hover:text-green-300 transition duration-200 ease-in-out
-                cursor-pointer"
+                cursor-pointer text-m"
                 >
                 Sign out
               </p>
             </div> 
             <button 
             type="submit" 
-              className="w-full bg-blue-600
-              text-white uppercase px-7 py-3 text-sm font-medium
-              rounded shadow-md hover:bg-blue-700
+              className="w-full bg-green-200
+              text-blue-200 uppercase px-7 py-3 text-m font-medium
+              rounded shadow-md hover:bg-blue-100 hover:text-white
               transition duration-150 ease-in-out hover:shadow-lg
-              active:bg-blue-800">
+              active:bg-blue-200 active:text-white">
                 <Link to="/mytrips"
                     className="flex justify-center items-center">
-                  <FaHome className="mr-2 text-3xl bg-red-200
+                  <LiaGolfBallSolid className="mr-2 text-m bg-green-300
                   rounded-full p-1 border-2"/>
-                  Sell or Rent your home
+                  Click to Save your updated profile
                 </Link>
             </button>
             <p>{}</p>
           </form>
         </div>
       </section>
-      <div className="max-w-6xl px-3 mt-6 mx-auto">
-       {!loading && listings.length > 0 && (  
-       
-          <>
-            <h2
-            className="text-2xl text-center font-semibold mb-6">
-              My Listings
-            </h2>
-            <ul className="sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-              {listings.map((listing) => (
-                <ListingItem
-                 key={listing.id} 
-                 id={listing.id} 
-                 listing={listing.data}
-                 />
-              ))}
-            </ul>
-          </>
-          )}
-      </div>
     </>
   )
 }

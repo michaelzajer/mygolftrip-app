@@ -1,4 +1,4 @@
-import { useState, prevState } from "react";
+import { useState } from "react";
 import {AiFillEyeInvisible, AiFillEye} from "react-icons/ai"
 import { Link, useNavigate } from "react-router-dom";
 import OAuth from "../components/OAuth";
@@ -13,8 +13,9 @@ export default function SignIn() {
   });
   const {email, password} = formData;
   const navigate = useNavigate();
+
   function onChange(e) {
-    setFormData((prevState)=({
+    setFormData((prevState)=>({
       ...prevState, 
       [e.target.id]: e.target.value,
     }));
@@ -29,7 +30,7 @@ export default function SignIn() {
         email, 
         password)
         if(userCredential.user){
-          navigate("/")
+          navigate("/mytrips")
         }
     } catch (error) {
       toast.error("Bad user credentials")
