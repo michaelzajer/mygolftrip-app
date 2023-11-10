@@ -8,6 +8,7 @@ import {
     doc,
     setDoc,
   } from 'firebase/firestore';
+import { Link } from 'react-router-dom';
 
   
   const CreateTrip = () => {
@@ -153,8 +154,15 @@ import {
             </select>
           </div>
         ))}
+        <div>
         <button onClick={addGroup}>Add Group</button>
         <button onClick={handleCreateTrip}>Create Trip</button>
+        </div>
+        <Link to="/admin/triplist"
+          className="text-green-300 hover:text-blue-200 transition duration-200 ease-in-out ml-1"
+        >
+          Trip List
+        </Link>
       </div>
     );
   };

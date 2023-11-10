@@ -14,6 +14,7 @@ import Admin from "./pages/Admin";
 import CreateGolfer from "./pages/CreateGolfer";
 import CreateListing from "./pages/CreateListing";
 import CreateTrip from "./pages/CreateTrip";
+import TripList from "./pages/TripList";
 
 function App() {
   return (
@@ -36,6 +37,9 @@ function App() {
           </Route>
           <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
           <Route path="" element={<CreateTrip/>} />
+          </Route>
+          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
+          <Route path="/admin/triplist" element={<TripList/>} />
           </Route>
           <Route path="/create-golfer" element={<CreateGolfer />}>
           </Route>
