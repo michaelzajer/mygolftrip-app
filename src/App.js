@@ -6,7 +6,7 @@ import SignUp from "./pages/SignUp"
 import ForgotPassword from "./pages/ForgotPassword"
 import Header from "./components/Header";
 import Mytrips from "./pages/Mytrips";
-import Leaderboard from "./pages/Leaderboard";
+import LeaderBoard from "./pages/LeaderboardGroups";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import PrivateRoute from "./components/PrivateRoute";
@@ -15,6 +15,10 @@ import CreateGolfer from "./pages/CreateGolfer";
 import CreateListing from "./pages/CreateListing";
 import CreateTrip from "./pages/CreateTrip";
 import TripList from "./pages/TripList";
+import LeaderBoardGroups from "./pages/LeaderboardGroups";
+import LeaderboardDate from "./pages/LeaderboardDate";
+import LeaderboardOverall from "./pages/LeaderboardOverall";
+import Leaderboards from "./pages/Leaderboards";
 
 function App() {
   return (
@@ -33,7 +37,16 @@ function App() {
             <Route path="/mytrips" element={<Mytrips/>} />
           </Route>
           <Route path="/leaderboard" element={<PrivateRoute/>}>
-            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/leaderboard" element={<Leaderboards />} />
+          </Route>
+          <Route path="/leaderboardgroups" element={<PrivateRoute/>}>
+            <Route path="/leaderboardgroups" element={<LeaderBoardGroups />} />
+          </Route>
+          <Route path="/leaderboarddate" element={<PrivateRoute/>}>
+            <Route path="/leaderboarddate" element={<LeaderboardDate />} />
+          </Route>
+          <Route path="/leaderboardoverall" element={<PrivateRoute/>}>
+            <Route path="/leaderboardoverall" element={<LeaderboardOverall />} />
           </Route>
           <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
           <Route path="" element={<CreateTrip/>} />

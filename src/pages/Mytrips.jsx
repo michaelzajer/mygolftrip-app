@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, orderBy } from 'firebase/firestore';
 import { getAuth } from "firebase/auth";
 import GolferItem from "../components/GolferItem";
+import GolferTripItem from "../components/GolferTripItem";
 
 const MyTrips = () => {
   const [myTrips, setMyTrips] = useState([]);
@@ -21,7 +22,7 @@ const MyTrips = () => {
         const groupsSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups`));
         
         for (const groupDoc of groupsSnapshot.docs) {
-          const golfersSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/golfers`));
+          const golfersSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/golfers`), orderBy('score', 'desc'));
           const golfers = golfersSnapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
 
           const isGolferInGroup = golfers.some(golfer => golfer.golferRef === golferId);
@@ -119,6 +120,7 @@ const MyTrips = () => {
           {/* Left Component */}
           <div className="flex-shrink-0 w-full md:w-1/3">
             <GolferItem golferRef={golferId} />
+            <GolferTripItem />
           </div>
   
           {/* My Trips Groups */}
@@ -129,7 +131,7 @@ const MyTrips = () => {
                   {trip.groups && (
                     <div className="mt-4 bg-white shadow-lg rounded-lg">
                       {/* Group Header */}
-                      <div className="flex justify-between bg-blue-100 text-white text-center py-2 rounded-t-lg">
+                      <div className="flex justify-between bg-blue-500 text-white text-center py-2 rounded-t-lg">
                         {/* Group Date on the Left */}
                         <h3 className="text-m font-semibold mb-2 px-2 self-center">
                           {trip.groups.groupDate}

@@ -96,8 +96,8 @@ import { Link } from 'react-router-dom';
             await setDoc(doc(db, `golfTrips/${tripRef.id}/groups/${groupRef.id}/golfers`, golferId), {
               golferRef: golferId,
               golferName: golfer.name,
-              score: null,
-              dailyHcp: null,
+              score: '0',
+              dailyHcp: '0',
             });
           }));
         }));

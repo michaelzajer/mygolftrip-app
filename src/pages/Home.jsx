@@ -21,7 +21,7 @@ export default function Home() {
       <p className="text-center mt-4">
         Don't have an account?
         <Link to="/sign-up"
-          className="text-green-300 hover:text-blue-200 transition duration-200 ease-in-out ml-1"
+          className="text-green-300 hover:text-blue-500 transition duration-200 ease-in-out ml-1"
         >
           Register
         </Link>
