@@ -52,22 +52,22 @@ const [trips, setTrips] = useState([]);
             </div>
           </div>
         ))}
-        <div className="flex justify-left space-x-10 px-6 pb-1 ">
+        <div className="flex justify-left space-x-10 px-6 pb-1 bg-green-400 text-white">
         <button
             onClick={() => setActiveLeaderboard('overall')}
-            className="text-green-100 hover:text-blue-100 font-semibold"
+            className="text-blue-500 hover:text-blue-100 font-semibold"
           >
             Overall
           </button>
           <button
             onClick={() => setActiveLeaderboard('date')}
-            className="text-green-100 hover:text-blue-100 font-semibold"
+            className="text-blue-500 hover:text-blue-100 font-semibold"
           >
             Date
           </button>
           <button
             onClick={() => setActiveLeaderboard('groups')}
-            className="text-green-100 hover:text-blue-100 font-semibold"
+            className="text-blue-500 hover:text-blue-100 font-semibold"
           >
             Group
           </button>

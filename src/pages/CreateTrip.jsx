@@ -163,6 +163,12 @@ import { Link } from 'react-router-dom';
         >
           Trip List
         </Link>
+        <Link to="/admin/scheduletrip"
+          className="text-green-300 hover:text-blue-200 transition duration-200 ease-in-out ml-1"
+        >
+          Schedule
+        </Link>
+        
       </div>
     );
   };

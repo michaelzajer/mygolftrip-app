@@ -19,6 +19,7 @@ import LeaderBoardGroups from "./pages/LeaderboardGroups";
 import LeaderboardDate from "./pages/LeaderboardDate";
 import LeaderboardOverall from "./pages/LeaderboardOverall";
 import Leaderboards from "./pages/Leaderboards";
+import AdminSchedulePage from "./pages/AdminSchedule";
 
 function App() {
   return (
@@ -53,6 +54,9 @@ function App() {
           </Route>
           <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
           <Route path="/admin/triplist" element={<TripList/>} />
+          </Route>
+          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
+          <Route path="/admin/scheduletrip" element={<AdminSchedulePage/>} />
           </Route>
           <Route path="/create-golfer" element={<CreateGolfer />}>
           </Route>

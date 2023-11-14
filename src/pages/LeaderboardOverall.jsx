@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import moment from 'moment';
 
 const LeaderboardOverall = () => {
   const [golfers, setGolfers] = useState([]);
@@ -11,7 +12,7 @@ const LeaderboardOverall = () => {
       const tripsCollectionRef = collection(db, 'golfTrips');
       const tripsSnapshot = await getDocs(tripsCollectionRef);
       let allGolfers = [];
-
+  
       for (let tripDoc of tripsSnapshot.docs) {
         const groupsCollectionRef = collection(db, `golfTrips/${tripDoc.id}/groups`);
         const groupsSnapshot = await getDocs(groupsCollectionRef);
@@ -22,21 +23,22 @@ const LeaderboardOverall = () => {
           
           for (let golferDoc of golfersSnapshot.docs) {
             const golferData = golferDoc.data();
+            // Here we use Moment.js to format the date
+            const formattedDate = moment(groupDoc.data().groupDate).format('ddd - DD-MM-YY');
             allGolfers.push({
               ...golferData,
               groupName: groupDoc.data().groupName,
-              golferId: golferDoc.id, // Assuming each golfer has a unique ID
+              groupDate: formattedDate, // Formatted date is used here
+              golferId: golferDoc.id,
             });
           }
         }
       }
-
-      // Sort all golfers by score in descending order
+  
       allGolfers.sort((a, b) => Number(b.score) - Number(a.score));
-
       setGolfers(allGolfers);
     };
-
+  
     fetchTrips();
   }, []);
 
@@ -47,6 +49,7 @@ const LeaderboardOverall = () => {
           <p className="col-span-3">Golfer Name</p>
           <p className="col-span-3">Group Name</p>
           <p className="col-span-3">Score</p>
+          <p className="col-span-3">Date</p>
           {/* Add any additional headers */}
         </div>
         {golfers.map(golfer => (
@@ -54,6 +57,7 @@ const LeaderboardOverall = () => {
             <p className="col-span-3">{golfer.golferName}</p>
             <p className="col-span-3">{golfer.groupName}</p>
             <p className="col-span-3">{golfer.score}</p>
+            <p className="col-span-3">{golfer.groupDate}</p>
             {/* Add any additional golfer info */}
           </div>
         ))}
