@@ -49,7 +49,8 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   };
 
   const getTotalScore = () => {
-    return Object.values(scorecard.scores).reduce((total, score) => total + (score || 0), 0);
+    // Check if scorecard is not null before trying to access its properties
+    return scorecard ? Object.values(scorecard.scores).reduce((total, score) => total + (score || 0), 0) : 0;
   };
 
   const renderEditForm = (holeNumber) => {
