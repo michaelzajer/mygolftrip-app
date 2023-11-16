@@ -5,9 +5,10 @@ import { getAuth } from "firebase/auth";
 import GolferItem from "../components/GolferItem";
 import GolferTripItem from "../components/GolferTripItem";
 import DateDetails from '../components/DateDetails';
+import ScheduleAndGroupsByDate from '../components/ScheduleAndGroupsByDate';
 
 const MyTrips = () => {
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDateInfo, setSelectedDateInfo] = useState({ date: null, golfTripId: null });
   const [myTrips, setMyTrips] = useState([]);
   const auth = getAuth();
   const golferId = auth.currentUser?.uid;
@@ -27,7 +28,7 @@ const MyTrips = () => {
           const golfers = golfersSnapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
 
           const isGolferInGroup = golfers.some(golfer => golfer.golferRef === golferId);
-          
+
           if (isGolferInGroup) {
             tripsData.push({
               ...tripDoc.data(),
@@ -51,31 +52,43 @@ const MyTrips = () => {
     fetchMyTrips();
   }, [golferId]);
 
-  // Define the callback function to handle date selection
-  const handleDateSelect = (date) => {
-    setSelectedDate(date); // Update the selected date
-  };
-
-  return (
-    <div className="flex justify-center px-6 py-12">
-      <div className="max-w-7xl w-full mx-auto">
-        <div className="flex flex-col md:flex-row md:items-start gap-8">
-          {/* Left Component */}
-          <div className="flex-shrink-0 w-full md:w-1/3">
-            <GolferItem golferRef={golferId} />
-            <GolferTripItem onDateSelect={handleDateSelect} />
-          </div>
+    // Define the callback function to handle date selection
+    const handleDateSelect = (date, golfTripId) => {
+      setSelectedDateInfo({ date, golfTripId }); // Update the selected date, trip ID, and group ID
+    };
   
-          {/* My Trips Groups */}
-          <div className="w-full">
-            {selectedDate && <DateDetails selectedDate={selectedDate} golferId={golferId} />}
-          </div>
+    return (
+      <div className="flex justify-center px-6 py-12">
+        <div className="max-w-7xl w-full mx-auto">
+          <div className="flex flex-col md:flex-row md:items-start gap-8">
+            {/* Left Component */}
+            <div className="flex-shrink-0 w-full md:w-1/3">
+              <GolferItem golferRef={golferId} />
+              <GolferTripItem onDateSelect={handleDateSelect} />
+            </div>
+    
+            {/* Right Components */}
+            <div className="w-full">
+              {/* Render ScheduleAndGroupsByDate if a date is selected */}
+              {selectedDateInfo.date && (
+                <ScheduleAndGroupsByDate
+                  selectedDate={selectedDateInfo.date}
+                  golfTripId={selectedDateInfo.golfTripId}
+                />
+              )}
   
-          {/* Add additional components or content here if necessary */}
+              {/* Render DateDetails if a date is selected */}
+              {selectedDateInfo.date && (
+                <DateDetails
+                  selectedDate={selectedDateInfo.date}
+                  golferId={golferId}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-export default MyTrips;
+    );
+  };
+  
+  export default MyTrips;

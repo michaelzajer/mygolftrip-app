@@ -55,7 +55,7 @@ const GolferTripItem = (props) => {
           <div className="flex justify-center space-x-2 mt-4">
             {trip.dateRange.map(date => (
               <button key={date} className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-1 rounded"
-              onClick={() => props.onDateSelect(date)}>
+              onClick={() => props.onDateSelect(date, trip.id)}>
               {date}
               </button>
             ))}

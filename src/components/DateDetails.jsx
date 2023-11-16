@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { getAuth } from "firebase/auth";
 import moment from 'moment';
+import ScoreCard from './ScoreCard';
+import ViewRound from './ViewRound';
 
 const DateDetails = ({ selectedDate }) => {
   const [dateDetails, setDateDetails] = useState([]);
-  const [editState, setEditState] = useState({});
   const auth = getAuth();
-  const golferId = auth.currentUser?.uid; // Get the currently logged in golfer's ID
+  const golferId = auth.currentUser?.uid;
+  const [showScoreCard, setShowScoreCard] = useState(false);
+  const [activeScorecardInfo, setActiveScorecardInfo] = useState({ groupId: null, golferId: null, golfTripId: null });
+  const [viewRoundOpen, setViewRoundOpen] = useState(false);
 
   useEffect(() => {
     const fetchDateDetails = async () => {
@@ -55,150 +59,106 @@ const DateDetails = ({ selectedDate }) => {
     fetchDateDetails();
   }, [selectedDate]);
 
-  const handleEditClick = (tripId, groupId, golfer) => {
-    setEditState({
-      ...editState,
-      [golfer.golferId]: golfer // Set the golfer data into edit state
-    });
+
+  const handleOpenScoreCard = (tripId, groupId, golferId) => {
+    setActiveScorecardInfo({ groupId, golferId, golfTripId: tripId });
+    setShowScoreCard(true);
   };
 
-  const handleScoreChange = (golferId, value) => {
-    setEditState({
-      ...editState,
-      [golferId]: {
-        ...editState[golferId],
-        score: value // Update the score in the edit state
-      }
-    });
+  const handleOpenViewRound = (golfTripId, groupId, golferId, onClose) => {
+    setActiveScorecardInfo({ groupId, golferId, golfTripId });
+    setViewRoundOpen(true); // Set this to true to indicate that ViewRound should be opened
   };
 
-  const handleHcpChange = (golferId, value) => {
-    setEditState({
-      ...editState,
-      [golferId]: {
-        ...editState[golferId],
-        dailyHcp: value // Update the daily handicap in the edit state
-      }
-    });
+  const handleCloseScoreCard = () => {
+    setShowScoreCard(false);
   };
 
-  const handleSave = async (tripId, groupId, golfer) => {
-    const updatedData = editState[golfer.golferId];
-    // Use tripId and groupId to construct the Firestore document path
-    const golferDocRef = doc(db, `golfTrips/${tripId}/groups/${groupId}/golfers`, golfer.golferId);
+  const handleCloseViewRound = () => {
+    setViewRoundOpen(false); // This will close the ViewRound component
+  };
 
-    // Save updated data to Firestore
-    await updateDoc(golferDocRef, updatedData);
-
-    // Clear the edit state for this golfer
-    setEditState(prevState => {
-      const newState = { ...prevState };
-      delete newState[golfer.golferId]; // Remove the golfer from the edit state
-      return newState;
-    });
-
-    // Update local state to reflect the saved changes
-    setDateDetails(currentDetails =>
-      currentDetails.map(d => {
-        if (d.groupId === groupId) {
-          return {
-            ...d,
-            golfers: d.golfers.map(g => {
-              if (g.golferId === golfer.golferId) {
-                return { ...g, ...updatedData };
-              }
-              return g;
-            })
-          };
-        }
-        return d;
-      })
+  if (showScoreCard) {
+    return (
+      <ScoreCard
+        dGroupId={activeScorecardInfo.groupId}
+        dGolferId={activeScorecardInfo.golferId}
+        golfTripId={activeScorecardInfo.golfTripId}
+        onClose={handleCloseScoreCard}
+      />
     );
-  };
+  }
 
   return (
     <div>
-      {dateDetails.length > 0 ? (
-        dateDetails.map((detail, index) => (
-          <div key={index} className="mb-4">
-            <div className="mt-4 bg-white shadow-lg rounded-lg">
-              <div className="flex justify-between bg-blue-500 text-white text-center py-2 rounded-t-lg">
-                <h3 className="text-m font-semibold mb-2 px-2 self-center">
-                  {detail.groupDate}
-                </h3>
-                <h3 className="text-m font-semibold mb-2 flex-grow text-center">
-                  {detail.groupName}
-                </h3>
-              </div>
-              <div className="grid grid-cols-12 gap-2 p-2 font-medium text-m border-b">
-                <div className="col-span-4">Golfer Name</div> {/* Adjusted the span to 5 */}
-                <div className="col-span-2">Daily Hcp</div> {/* Adjusted the span to 3 */}
-                <div className="col-span-2">Score</div> {/* Adjusted the span to 3 */}
-                <div className="col-span-1">Actions</div> {/* Adjusted the span to 1 */}
-              </div>
-              {detail.golfers.map(golfer => {
-                const isEditing = !!editState[golfer.golferId];
-                return (
-                  <div key={golfer.golferId} className="grid grid-cols-12 gap-2 p-2 border-b">
-                    <div className="col-span-4">{golfer.golferName}</div>
-                    <div className="col-span-2">
-                      {isEditing ? (
-                        <input
-                          type="number"
-                          value={editState[golfer.golferId].dailyHcp}
-                          onChange={(e) => handleHcpChange(golfer.golferId, e.target.value)}
-                          className="border rounded px-2 py-1 text-sm w-full"
-                        />
-                      ) : (
+      {viewRoundOpen ? (
+        <ViewRound
+          dGroupId={activeScorecardInfo.groupId}
+          dGolferId={activeScorecardInfo.golferId}
+          golfTripId={activeScorecardInfo.golfTripId}
+          onClose={handleCloseViewRound}
+        />
+      ) : (
+        <>
+          {dateDetails.length > 0 ? (
+            dateDetails.map((detail, index) => (
+              <div key={index} className="mb-4">
+                <div className="mt-4 bg-white shadow-lg rounded-lg">
+                  <div className="flex justify-between bg-blue-500 text-white text-center py-2 rounded-t-lg">
+                    <h3 className="text-m font-semibold mb-2 px-2 self-center">
+                      {detail.groupDate}
+                    </h3>
+                    <h3 className="text-m font-semibold mb-2 flex-grow text-center">
+                      {detail.groupName}
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-12 gap-2 p-2 font-medium text-m border-b">
+                    <div className="col-span-4">Golfer Name</div>
+                    <div className="col-span-2">Daily Hcp</div>
+                    <div className="col-span-2">Score</div>
+                    <div className="col-span-1">Actions</div>
+                  </div>
+                  {detail.golfers.map(golfer => (
+                    <div key={golfer.golferId} className="grid grid-cols-12 gap-2 p-2 border-b">
+                      <div className="col-span-4">{golfer.golferName}</div>
+                      <div className="col-span-2">
                         <span>{golfer.dailyHcp}</span>
-                      )}
-                    </div>
-                    <div className="col-span-2">
-                      {isEditing ? (
-                        <input
-                          type="number"
-                          value={editState[golfer.golferId].score}
-                          onChange={(e) => handleScoreChange(golfer.golferId, e.target.value)}
-                          className="border rounded px-2 py-1 text-sm w-full"
-                        />
-                      ) : (
+                      </div>
+                      <div className="col-span-2">
                         <span>{golfer.score}</span>
-                      )}
-                    </div>
-                    <div className="col-span-1 flex justify-center items-center"> {/* Centered the button */}
-                      {golfer.golferId === golferId && (
-                        isEditing ? (
+                      </div>
+                      <div className="col-span-1 flex justify-center items-center">
+                        {golfer.golferId === golferId && (
                           <button
-                            onClick={() => handleSave(detail.tripId, detail.groupId, golfer)}
-                            className="bg-green-500 hover:bg-green-700 text-white py-1 px-3 rounded text-xs"
-                          >
-                            Save
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleEditClick(detail.tripId, detail.groupId, golfer)}
+                            onClick={() => handleOpenScoreCard(detail.tripId, detail.groupId, golfer.golferId)}
                             className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-xs"
                           >
-                            Edit
+                            ScoreCard
                           </button>
-                        )
-                      )}
+                        )}
+                      </div>
+                      <div className="col-span-2 text-center">
+                        {golfer.golferId === golferId && (
+                          <button
+                            onClick={() => handleOpenViewRound(detail.tripId, detail.groupId, golfer.golferId)}
+                            className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-xs ml-2"
+                          >
+                            View Round
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))
-      ) : (
-        <p>No details available for this date.</p>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No details available for this date.</p>
+          )}
+        </>
       )}
     </div>
   );
-  
-  
-  
-  
 };
 
 export default DateDetails;
