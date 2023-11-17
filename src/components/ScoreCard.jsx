@@ -18,6 +18,7 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   const [scorecardsLoaded, setScorecardsLoaded] = useState(false); // New state to track if scorecards have been loaded
   const [golferDetails, setGolferDetails] = useState({}); // State to store golfer details
   const [golferGaDetails, setGolferGaDetails] = useState({})
+  const [stablefordPoints, setStablefordPoints] = useState(0);
 
   const formikRef = useRef();
   const auth = getAuth();
@@ -61,6 +62,41 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
     fetchGolferGaDetails();
   }, [golferId, golfTripId, dGroupId]); // Ensure this only runs once when the component mounts
 
+  useEffect(() => {
+    const setGolferDailyHandicap = async () => {
+      // Make sure you have all the necessary details before proceeding
+      if (golferGaDetails.handicapGA && scorecard && scorecard.teeRef) {
+        try {
+          // Path to the teeDailyHcps subcollection
+          const teeDailyHcpsRef = collection(db, scorecard.teeRef, 'teeDailyHcps');
+          const querySnapshot = await getDocs(teeDailyHcpsRef);
+  
+          // Find the document where the GA Handicap falls within the range
+          const handicapDoc = querySnapshot.docs.find((doc) => {
+            const data = doc.data();
+            return golferGaDetails.handicapGA >= data.gaHcpLower && golferGaDetails.handicapGA <= data.gaHcpUpper;
+          });
+  
+          // If a matching document is found, set the daily handicap
+          if (handicapDoc) {
+            const data = handicapDoc.data();
+            const dailyHandicap = data.dailyHcp; // Ensure this matches the exact field name in Firestore
+            setDailyHcp(dailyHandicap);
+  
+          } else {
+            // Log if no document is found
+            console.log("No matching document found for GA Handicap:", golferGaDetails.handicapGA);
+          }
+        } catch (error) {
+          console.error("Error setting golfer's daily handicap: ", error);
+        }
+      }
+    };
+  
+    setGolferDailyHandicap();
+  }, [golferGaDetails.handicapGA, scorecard]); // Run this hook when the GA Handicap or scorecard changes
+  
+  
 
   useEffect(() => {
     const fetchScorecard = async () => {
@@ -108,11 +144,32 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
     fetchScorecard();
   }, [golferId, golfTripId, dGroupId, dGolferId]);
 
+// Function to calculate Stableford points
+const calculateStablefordPoints = (score, par, dailyHcp, holeIndex) => {
+  // Convert par and holeIndex to numbers to avoid string concatenation issues
+  const numericPar = Number(par);
+  const numericHoleIndex = Number(holeIndex);
+  const handicapStrokes = Math.floor(dailyHcp / 18) + (numericHoleIndex <= dailyHcp % 18 ? 1 : 0);
+  const adjustedPar = numericPar + handicapStrokes;
+  const netScore = score - adjustedPar;
+
+  if (netScore <= -3) return 5;
+  if (netScore === -2) return 4;
+  if (netScore === -1) return 3;
+  if (netScore === 0) return 2;
+  if (netScore === 1) return 1;
+  return 0;
+};
+
   // Function to increment the score
   const incrementScore = (currentScore, holeNumber) => {
   const newScore = Number(currentScore) + 1;
   formikRef.current.setFieldValue('score', newScore);
- // Assume updatedScores is the object with updated scores after incrementing
+
+  const holeDetails = holesDetailsMap[holeNumber];
+  const stablefordPoints = calculateStablefordPoints(newScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
+  setStablefordPoints(stablefordPoints); 
+  // Assume updatedScores is the object with updated scores after incrementing
  const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
  saveScore(newScore, currentHoleNumber); // Update the score for the current hole
  updateTotalScore(updatedScores); // Update the running total
@@ -122,7 +179,11 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   const decrementScore = (currentScore, holeNumber) => {
   const newScore = Math.max(Number(currentScore) - 1, 0);
   formikRef.current.setFieldValue('score', newScore);
- // Assume updatedScores is the object with updated scores after decrementing
+
+  const holeDetails = holesDetailsMap[holeNumber];
+  const stablefordPoints = calculateStablefordPoints(newScore, currentHoleDetails.holePar, dailyHcp, holeDetails.holeIndex);
+  setStablefordPoints(stablefordPoints); 
+  // Assume updatedScores is the object with updated scores after decrementing
  const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
  saveScore(newScore, currentHoleNumber); // Update the score for the current hole
  updateTotalScore(updatedScores); // Update the running total
@@ -174,7 +235,6 @@ const updateTotalScore = (updatedScores) => {
       const scorecardRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', dGolferId, 'scorecards', scorecard.id);
       try {
         await updateDoc(scorecardRef, scoreUpdate);
-        console.log(`Score for hole ${holeNumber} saved: ${numericScore}`);
         // Update the total score
         updateTotalScore(updatedScores);
       } catch (error) {
@@ -307,18 +367,7 @@ const updateTotalScore = (updatedScores) => {
             <div className="mb-1 sm:mb-0">
               <span className="text-sm mr-2">{golferDetails.golferName}</span>
               <span className="text-sm mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
-              <span className="text-sm mr-1">Daily Hcp:</span>              
-              <input
-                type="number"
-                value={dailyHcp}
-                readOnly={!isEditingHcp}
-                onFocus={handleHcpFocus}
-                onBlur={handleHcpBlur}
-                onChange={(e) => setDailyHcp(e.target.value)}
-                className="text-blue-500 border rounded text-sm"
-                style={{ width: '80px', height: '20px' }}
-                placeholder="Daily Hcp"
-              />
+              <span className="text-sm mr-1">Daily Hcp: {dailyHcp}</span>
             </div>
           </div>
              {/* Hole information with responsive grid */}
@@ -370,8 +419,26 @@ const updateTotalScore = (updatedScores) => {
                 </div>
                 <div className="text-m">Score</div>
               </div>
-              <div className="text-center flex-grow sm:flex-grow-0">
-                <div className="text-lg font-semibold">{runningTotal}</div>
+              <div className="flex flex-col items-center flex-grow sm:flex-grow-0 mb-2 sm:mb-0">
+                <input
+                  id="stableford"
+                  name="stableford"
+                  type="text"
+                  readOnly
+                  value={stablefordPoints}
+                  className="border rounded text-center text-xl w-10"
+                />
+                <div className="text-m">Points</div>
+              </div>
+              <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
+                <input
+                  id="totalscore"
+                  name="totalscore"
+                  type="text"
+                  readOnly
+                  value={runningTotal}
+                  className="border rounded text-center text-xl w-12"
+                />
                 <div className="text-sm">Total Score</div>
               </div>
             </div>

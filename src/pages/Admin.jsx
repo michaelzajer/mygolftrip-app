@@ -39,7 +39,11 @@ export default function Admin() {
   >
     Admin Scorecard
   </Link>
-  
+  <Link to="/admin/adddailyhcp"
+    className="text-green-300 hover:text-blue-200 transition duration-200 ease-in-out ml-1"
+  >
+    Admin Add Daily Hcp
+  </Link>
   </div>
   )
 }

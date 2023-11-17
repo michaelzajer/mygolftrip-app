@@ -24,6 +24,7 @@ import CreateHole from "./pages/CreateHole";
 import CreateTeeBlock from "./pages/CreateTeeBlock";
 import ScoreCard from "./components/ScoreCard";
 import AdminScoreCard from "./pages/AdminScoreCard";
+import AdminDailyHcp from "./pages/AdminDailyHcp";
 
 function App() {
   return (
@@ -79,6 +80,9 @@ function App() {
           </Route>
           <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
           <Route path="/admin/scorecard" element={<AdminScoreCard />} />
+          </Route>
+          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
+          <Route path="/admin/adddailyhcp" element={<AdminDailyHcp />} />
           </Route>
           <Route path="/ForgotPassword" element={<ForgotPassword/>} />
           
