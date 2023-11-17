@@ -348,7 +348,7 @@ const updateTotalScore = (updatedScores) => {
                   <button
                     type="button"
                     onClick={() => decrementScore(values.score, currentHoleNumber)}
-                    className="bg-gray-300 hover:bg-gray-400 text-black py-1 px-4 rounded text-sm"
+                    className="bg-gray-300 hover:bg-gray-400 text-black py-1 px-4 rounded text-xl"
                   >
                     -
                   </button>
@@ -358,17 +358,17 @@ const updateTotalScore = (updatedScores) => {
                     type="text"
                     readOnly
                     value={values.score}
-                    className="border rounded text-center text-sm w-10"
+                    className="border rounded text-center text-xl w-10"
                   />
                   <button
                     type="button"
                     onClick={() => incrementScore(values.score, currentHoleNumber)}
-                    className="bg-gray-300 hover:bg-gray-400 text-black py-1 px-4 rounded text-sm"
+                    className="bg-gray-300 hover:bg-gray-400 text-black py-1 px-4 rounded text-xl"
                   >
                     +
                   </button>
                 </div>
-                <div className="text-sm">Score</div>
+                <div className="text-m">Score</div>
               </div>
               <div className="text-center flex-grow sm:flex-grow-0">
                 <div className="text-lg font-semibold">{runningTotal}</div>
