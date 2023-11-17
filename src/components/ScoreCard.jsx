@@ -19,6 +19,9 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   const [golferDetails, setGolferDetails] = useState({}); // State to store golfer details
   const [golferGaDetails, setGolferGaDetails] = useState({})
   const [stablefordPoints, setStablefordPoints] = useState(0);
+  const [runningStablefordTotal, setRunningStablefordTotal] = useState(0);
+
+
 
   const formikRef = useRef();
   const auth = getAuth();
@@ -161,33 +164,42 @@ const calculateStablefordPoints = (score, par, dailyHcp, holeIndex) => {
   return 0;
 };
 
-  // Function to increment the score
-  const incrementScore = (currentScore, holeNumber) => {
+// Function to increment the score
+const incrementScore = (currentScore, holeNumber) => {
+  const currentStablefordPoints = calculateStablefordPoints(currentScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
   const newScore = Number(currentScore) + 1;
-  formikRef.current.setFieldValue('score', newScore);
+  const newStablefordPoints = calculateStablefordPoints(newScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
 
-  const holeDetails = holesDetailsMap[holeNumber];
-  const stablefordPoints = calculateStablefordPoints(newScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
-  setStablefordPoints(stablefordPoints); 
-  // Assume updatedScores is the object with updated scores after incrementing
- const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
- saveScore(newScore, currentHoleNumber); // Update the score for the current hole
- updateTotalScore(updatedScores); // Update the running total
+  // Update form, state, and total points
+  formikRef.current.setFieldValue('score', newScore);
+  setStablefordPoints(newStablefordPoints); 
+  setRunningStablefordTotal((prevTotal) => prevTotal + (newStablefordPoints - currentStablefordPoints));
+
+  // Update the scorecard scores with the new score
+  const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
+  saveScore(newScore, currentHoleNumber); // Update the score for the current hole
+  updateTotalScore(updatedScores); // Update the running total
 };
+
 
 // Function to decrement the score
-  const decrementScore = (currentScore, holeNumber) => {
+const decrementScore = (currentScore, holeNumber) => {
+  const currentStablefordPoints = calculateStablefordPoints(currentScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
   const newScore = Math.max(Number(currentScore) - 1, 0);
-  formikRef.current.setFieldValue('score', newScore);
+  const newStablefordPoints = calculateStablefordPoints(newScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
 
-  const holeDetails = holesDetailsMap[holeNumber];
-  const stablefordPoints = calculateStablefordPoints(newScore, currentHoleDetails.holePar, dailyHcp, holeDetails.holeIndex);
-  setStablefordPoints(stablefordPoints); 
-  // Assume updatedScores is the object with updated scores after decrementing
- const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
- saveScore(newScore, currentHoleNumber); // Update the score for the current hole
- updateTotalScore(updatedScores); // Update the running total
+  // Update form, state, and total points
+  formikRef.current.setFieldValue('score', newScore);
+  setStablefordPoints(newStablefordPoints); 
+  setRunningStablefordTotal((prevTotal) => prevTotal + (newStablefordPoints - currentStablefordPoints));
+
+
+  // Update the scorecard scores with the new score
+  const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
+  saveScore(newScore, currentHoleNumber); // Update the score for the current hole
+  updateTotalScore(updatedScores); // Update the running total
 };
+
 
 // Function to update the total score
 const updateTotalScore = (updatedScores) => {
@@ -417,7 +429,7 @@ const updateTotalScore = (updatedScores) => {
                     +
                   </button>
                 </div>
-                <div className="text-m">Score</div>
+                <div className="text-m">Strokes</div>
               </div>
               <div className="flex flex-col items-center flex-grow sm:flex-grow-0 mb-2 sm:mb-0">
                 <input
@@ -431,6 +443,18 @@ const updateTotalScore = (updatedScores) => {
                 <div className="text-m">Points</div>
               </div>
               <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
+           {/*  <input
+                id="runningStablefordTotal"
+                name="runningStablefordTotal"
+                type="text"
+                readOnly
+                value={runningStablefordTotal}
+                className="border rounded text-center text-xl w-12"
+              />
+              <div className="text-sm">Total Points</div>
+        */}
+            </div>
+              <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
                 <input
                   id="totalscore"
                   name="totalscore"
@@ -439,7 +463,7 @@ const updateTotalScore = (updatedScores) => {
                   value={runningTotal}
                   className="border rounded text-center text-xl w-12"
                 />
-                <div className="text-sm">Total Score</div>
+                <div className="text-sm">Total Strokes</div>
               </div>
             </div>
 
