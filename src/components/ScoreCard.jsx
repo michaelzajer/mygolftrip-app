@@ -16,6 +16,9 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   const [dailyHcp, setDailyHcp] = useState(''); // Add state for daily handicap
   const [isEditingHcp, setIsEditingHcp] = useState(false); // New state for edit mode
   const [scorecardsLoaded, setScorecardsLoaded] = useState(false); // New state to track if scorecards have been loaded
+  const [golferDetails, setGolferDetails] = useState({}); // State to store golfer details
+  const [golferGaDetails, setGolferGaDetails] = useState({})
+
   const formikRef = useRef();
   const auth = getAuth();
   const golferId = auth.currentUser?.uid;
@@ -33,11 +36,29 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
       const golferRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', golferId);
       const golferSnap = await getDoc(golferRef);
       if (golferSnap.exists()) {
-        setDailyHcp(golferSnap.data().dailyHcp || ''); // Only set dailyHcp here
+        // Fetch additional golfer details here
+        const data = golferSnap.data();
+        setGolferDetails(data); // This will store all the golfer details
+        setDailyHcp(data.dailyHcp || ''); // Set daily handicap
       }
     };
 
     fetchGolferDetails();
+  }, [golferId, golfTripId, dGroupId]); // Ensure this only runs once when the component mounts
+
+  useEffect(() => {
+    // Fetch and set initial GA handicap
+    const fetchGolferGaDetails = async () => {
+      const golferGaRef = doc(db, 'golfers', golferId);
+      const golferGaSnap = await getDoc(golferGaRef);
+      if (golferGaSnap.exists()) {
+        // Fetch additional golfer details here
+        const data = golferGaSnap.data();
+        setGolferGaDetails(data); // This will store all the golfer details
+      }
+    };
+
+    fetchGolferGaDetails();
   }, [golferId, golfTripId, dGroupId]); // Ensure this only runs once when the component mounts
 
 
@@ -87,7 +108,31 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
     fetchScorecard();
   }, [golferId, golfTripId, dGroupId, dGolferId]);
 
-  
+  // Function to increment the score
+  const incrementScore = (currentScore, holeNumber) => {
+  const newScore = Number(currentScore) + 1;
+  formikRef.current.setFieldValue('score', newScore);
+ // Assume updatedScores is the object with updated scores after incrementing
+ const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
+ saveScore(newScore, currentHoleNumber); // Update the score for the current hole
+ updateTotalScore(updatedScores); // Update the running total
+};
+
+// Function to decrement the score
+  const decrementScore = (currentScore, holeNumber) => {
+  const newScore = Math.max(Number(currentScore) - 1, 0);
+  formikRef.current.setFieldValue('score', newScore);
+ // Assume updatedScores is the object with updated scores after decrementing
+ const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
+ saveScore(newScore, currentHoleNumber); // Update the score for the current hole
+ updateTotalScore(updatedScores); // Update the running total
+};
+
+// Function to update the total score
+const updateTotalScore = (updatedScores) => {
+  const total = Object.values(updatedScores).reduce((sum, score) => sum + (score || 0), 0);
+  setRunningTotal(total);
+};
 
   const updateFormInitialValues = (scorecardData, holeNumber) => {
     const currentHoleId = Object.keys(holesDetailsMap).find(key => holesDetailsMap[key].holeNumber === holeNumber);
@@ -106,12 +151,11 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
     updateDailyHcp(dailyHcp); // Update Firestore when focus is lost
   };
 
-  const saveScore = async (score) => {
+  const saveScore = async (score, holeNumber) => {
     const numericScore = Number(score);
+    const holeId = Object.keys(holesDetailsMap).find(key => holesDetailsMap[key].holeNumber === holeNumber);
   
-    if (numericScore && scorecard && currentHoleNumber) {
-      const holeId = Object.keys(holesDetailsMap).find(key => holesDetailsMap[key].holeNumber === currentHoleNumber);
-  
+    if (numericScore && scorecard && holeId) {
       const updatedScores = {
         ...scorecard.scores,
         [holeId]: numericScore,
@@ -123,27 +167,22 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
         scores: updatedScores,
       }));
   
-      const updatedScorecardData = {
-        ...scorecard,
-        scores: updatedScores,
-      };
+      // Prepare the update object
+      const scoreUpdate = { [`scores.${holeId}`]: numericScore };
   
+      // Update Firestore
       const scorecardRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', dGolferId, 'scorecards', scorecard.id);
-  
       try {
-        await setDoc(scorecardRef, updatedScorecardData);
-        console.log(`Score for hole ${holeId} saved: ${numericScore}`);
-  
-        // Recalculate and update the running total
-        const newTotal = Object.values(updatedScores).reduce((sum, score) => sum + (score || 0), 0);
-        setRunningTotal(newTotal);
-  
-        navigateHoles('next');
+        await updateDoc(scorecardRef, scoreUpdate);
+        console.log(`Score for hole ${holeNumber} saved: ${numericScore}`);
+        // Update the total score
+        updateTotalScore(updatedScores);
       } catch (error) {
-        console.error(`Error saving score for hole ${holeId}: `, error);
+        console.error(`Error saving score for hole ${holeNumber}: `, error);
       }
     }
   };
+  
 
   const completeRound = async () => {
     if (!scorecard || !golferId) {
@@ -242,31 +281,16 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
  
 
   return (
-<div className="bg-white shadow-lg rounded-lg p-4">
-<div className="bg-blue-500 text-white py-2 rounded-t-lg flex justify-between items-center">
-  <h3 className="text-xl font-semibold ml-4">Scorecard - {courseName} - {teeName}</h3>
-  <div className="flex items-center">
-    <span className="text-sm mr-2">Daily Hcp:</span> {/* Label for daily handicap */}
-    <input
-      type="number"
-      value={dailyHcp}
-      readOnly={!isEditingHcp}
-      onFocus={handleHcpFocus}
-      onBlur={handleHcpBlur}
-      onChange={(e) => setDailyHcp(e.target.value)}
-      className="text-blue-500 border rounded text-sm" // Removed the px-2 py-1 for padding
-      style={{ width: '80px' }} // Set a specific width
-      placeholder="Hcp"
-    />
-          <button 
-            onClick={onClose}
-            className="bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded text-sm"
-          >
+    <div className="bg-white shadow-lg rounded-lg p-4">
+      <div className="bg-blue-500 text-white py-2 rounded-t-lg flex justify-between items-center">
+        <h3 className="text-m font-semibold ml-4">Scorecard - {courseName} - {teeName}</h3>
+        <div className="flex items-center">
+          <button onClick={onClose} className="bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded text-sm">
             Close
           </button>
         </div>
       </div>
-      
+
       <Formik
         innerRef={formikRef}
         initialValues={initialValues}
@@ -276,66 +300,114 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
           setSubmitting(false);
         }}
       >
-        {({ values, handleChange, handleSubmit, isSubmitting }) => (
-          <>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div className="text-lg">Hole Number: <span className="font-semibold">{currentHoleNumber}</span></div>
-                <div className="text-lg">Length: <span className="font-semibold">{currentHoleDetails.holeLength} mtrs</span></div>
-                <div className="text-lg">Par: <span className="font-semibold">{currentHoleDetails.holePar}</span></div>
-                <div className="text-lg">Index: <span className="font-semibold">{currentHoleDetails.holeIndex}</span></div>
+        {({ values, handleSubmit, isSubmitting }) => (
+          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Golfer information */}
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-0">
+            <div className="mb-1 sm:mb-0">
+              <span className="text-sm mr-2">{golferDetails.golferName}</span>
+              <span className="text-sm mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
+              <span className="text-sm mr-1">Daily Hcp:</span>              
+              <input
+                type="number"
+                value={dailyHcp}
+                readOnly={!isEditingHcp}
+                onFocus={handleHcpFocus}
+                onBlur={handleHcpBlur}
+                onChange={(e) => setDailyHcp(e.target.value)}
+                className="text-blue-500 border rounded text-sm"
+                style={{ width: '80px', height: '20px' }}
+                placeholder="Daily Hcp"
+              />
+            </div>
+          </div>
+             {/* Hole information with responsive grid */}
+            <div className="grid grid-cols-4 sm:grid-cols-4 gap-1 text-center mb-0">
+              <div>
+                <div className="font-semibold">{currentHoleDetails.holeNumber}</div>
+                <div className="text-sm">Hole</div>
               </div>
+              <div>
+                <div className="font-semibold">{currentHoleDetails.holeLength} mtrs</div>
+                <div className="text-sm">Length</div>
+              </div>
+              <div>
+                <div className="font-semibold">{currentHoleDetails.holePar}</div>
+                <div className="text-sm">Par</div>
+              </div>
+              <div>
+                <div className="font-semibold">{currentHoleDetails.holeIndex}</div>
+                <div className="text-sm">Index</div>
+              </div>
+            </div>
 
-              <div className="flex items-center space-x-4">
-                <label htmlFor="score" className="text-lg">Score:</label>
-                <Field
-                  id="score"
-                  name="score"
-                  type="number"
-                  value={values.score}
-                  onChange={handleChange}
-                  placeholder="Enter score"
-                  className="border rounded px-2 py-1 text-sm w-16"
-                />
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="bg-green-500 hover:bg-green-700 text-white py-1 px-3 rounded text-sm"
-                >
-                  Save Score
-                </button>
-              </div>
-              <div className="text-lg">Total Score: <span className="font-semibold">{runningTotal}</span></div>
-              <div className="flex justify-between">
-                <button 
-                  type="button" 
-                  onClick={() => navigateHoles('prev')}
-                  className="bg-gray-500 hover:bg-gray-700 text-white py-1 px-3 rounded text-sm"
-                >
-                  Previous
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => navigateHoles('next')}
-                  className="bg-gray-500 hover:bg-gray-700 text-white py-1 px-3 rounded text-sm"
-                >
-                  Next
-                </button>
-              </div>
-
-              {currentHoleNumber === 18 && (
-                <div className="text-center">
-                  <button 
-                    type="button" 
-                    onClick={completeRound}
-                    className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm mt-4"
+            {/* Score and Total Score with responsive layout */}
+            <div className="flex flex-wrap justify-between items-center">
+              <div className="flex flex-col items-center flex-grow sm:flex-grow-0 mb-2 sm:mb-0">
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => decrementScore(values.score, currentHoleNumber)}
+                    className="bg-gray-300 hover:bg-gray-400 text-black py-1 px-4 rounded text-sm"
                   >
-                    Complete Round
+                    -
+                  </button>
+                  <input
+                    id="score"
+                    name="score"
+                    type="text"
+                    readOnly
+                    value={values.score}
+                    className="border rounded text-center text-sm w-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => incrementScore(values.score, currentHoleNumber)}
+                    className="bg-gray-300 hover:bg-gray-400 text-black py-1 px-4 rounded text-sm"
+                  >
+                    +
                   </button>
                 </div>
-              )}
-            </form>
-          </>
+                <div className="text-sm">Score</div>
+              </div>
+              <div className="text-center flex-grow sm:flex-grow-0">
+                <div className="text-lg font-semibold">{runningTotal}</div>
+                <div className="text-sm">Total Score</div>
+              </div>
+            </div>
+
+            {/* Previous and Next buttons */}
+            <div className="flex  my-4">
+              <button
+                type="button"
+                onClick={() => navigateHoles('prev')}
+                className="bg-gray-500 hover:bg-gray-700 text-white py-1 px-3 rounded text-sm"
+              >
+                Previous
+              </button>
+              {/* Adding a spacer div for the gap */}
+              <div className="w-4 md:w-8"></div>
+              <button
+                type="button"
+                onClick={() => navigateHoles('next')}
+                className="bg-gray-500 hover:bg-gray-700 text-white py-1 px-3 rounded text-sm"
+              >
+                Next
+              </button>
+            </div>
+
+            {currentHoleNumber === 18 && (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={completeRound}
+                  className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm mt-4"
+                >
+                  Complete Round
+                </button>
+              </div>
+            )}
+          </form>
         )}
       </Formik>
     </div>

@@ -6,7 +6,7 @@ import moment from 'moment';
 import ScoreCard from './ScoreCard';
 import ViewRound from './ViewRound';
 
-const DateDetails = ({ selectedDate }) => {
+const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent }) => {
   const [dateDetails, setDateDetails] = useState([]);
   const auth = getAuth();
   const golferId = auth.currentUser?.uid;
@@ -63,6 +63,7 @@ const DateDetails = ({ selectedDate }) => {
   const handleOpenScoreCard = (tripId, groupId, golferId) => {
     setActiveScorecardInfo({ groupId, golferId, golfTripId: tripId });
     setShowScoreCard(true);
+    onHideLeftComponent(); // Hide the left component
   };
 
   const handleOpenViewRound = (golfTripId, groupId, golferId, onClose) => {
@@ -72,6 +73,7 @@ const DateDetails = ({ selectedDate }) => {
 
   const handleCloseScoreCard = () => {
     setShowScoreCard(false);
+    onShowLeftComponent(); // Show the left component
   };
 
   const handleCloseViewRound = () => {

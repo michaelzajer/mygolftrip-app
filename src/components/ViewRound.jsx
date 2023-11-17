@@ -14,20 +14,31 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
       const snapshot = await getDocs(scorecardsRef);
       if (!snapshot.empty) {
         const scorecardData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))[0];
-        const holesMap = {};
-        for (const holePath of scorecardData.holes) {
-          const holeRef = doc(db, holePath);
-          const holeSnap = await getDoc(holeRef);
-          if (holeSnap.exists()) {
-            const holeData = holeSnap.data();
-            holesMap[holeData.holeNumber] = holeData;
+        // Ensure scorecardData.holes is an array before attempting to iterate over it
+        if (Array.isArray(scorecardData.holes)) {
+          const holesMap = {};
+          for (const holePath of scorecardData.holes) {
+            const holeRef = doc(db, holePath);
+            const holeSnap = await getDoc(holeRef);
+            if (holeSnap.exists()) {
+              const holeData = holeSnap.data();
+              holesMap[holeData.holeNumber] = holeData;
+            }
           }
+          setHolesDetailsMap(holesMap);
+          setScorecard(scorecardData);
+        } else {
+          // Handle the case where scorecardData.holes is not an array
+          console.error('scorecardData.holes is not an array', scorecardData.holes);
+          // Consider setting an error state or a flag to indicate the issue
         }
-        setHolesDetailsMap(holesMap);
-        setScorecard(scorecardData);
+      } else {
+        // Handle the case where no scorecard is found
+        console.error('No scorecard found');
+        // Consider setting an error state or a flag to indicate the issue
       }
     };
-
+  
     fetchScorecard();
   }, [golfTripId, dGroupId, dGolferId]);
 
@@ -106,12 +117,13 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
           Close
         </button>
   
+        {/* Adjusting the grid layout for responsiveness */}
         <div className="grid grid-cols-12 gap-1 mb-4 font-semibold">
-          <div className="col-span-1">Hole</div>
-          <div className="col-span-1">Par</div>
-          <div className="col-span-1">Index</div>
-          <div className="col-span-3">Score</div>
-          <div className="col-span-1">Action</div>
+          <div className="col-span-2 sm:col-span-1">Hole</div>
+          <div className="col-span-2 sm:col-span-1">Par</div>
+          <div className="col-span-2 sm:col-span-1">Index</div>
+          <div className="col-span-3 sm:col-span-3">Score</div>
+          <div className="col-span-3 sm:col-span-6 md:col-span-1">Action</div>
         </div>
   
         {scorecard && Object.keys(holesDetailsMap)
@@ -120,27 +132,26 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
             const holeDetail = holesDetailsMap[holeId];
             const score = scorecard.scores[holeId];
             return (
-              <div key={holeId} className="grid grid-cols-12 gap-1 mb-2">
-                <div className="col-span-1 ">
+              <div key={holeId} className="grid grid-cols-12 gap-1 mb-2 items-center">
+                <div className="col-span-2 sm:col-span-1">
                   {holeDetail.holeNumber}
                 </div>
-                <div className="col-span-1 ">
+                <div className="col-span-2 sm:col-span-1">
                   {holeDetail.holePar}
                 </div>
-                <div className="col-span-1 ">
+                <div className="col-span-2 sm:col-span-1">
                   {holeDetail.holeIndex}
                 </div>
-                <div className="col-span-3">
+                <div className="col-span-3 sm:col-span-3">
                   {editHole === holeDetail.holeNumber ? (
                     renderEditForm(holeDetail.holeNumber)
                   ) : (
-                    <div className="">
+                    <div>
                       {score !== undefined ? score : 'Incomplete'}
                     </div>
                   )}
                 </div>
-                
-                <div className="col-span-1 ">
+                <div className="col-span-3 sm:col-span-6 md:col-span-1 min-w-0">
                   {editHole !== holeDetail.holeNumber && (
                     <button 
                       onClick={() => setEditHole(holeDetail.holeNumber)}
@@ -153,15 +164,10 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
               </div>
             );
           })}
-              {/* After the map function that renders each hole's details */}
-          <div className="grid grid-cols-10 gap-1 mb-2 items-left">
-            <div className="col-span-2 text-right font-semibold">
-              Total Score:
-            </div>
-            <div className="col-span-2 text-left font-semibold">
-              {getTotalScore()}
-            </div>
-          </div>
+        {/* Display total score */}
+        <div className="mt-4 text-lg font-semibold text-center">
+          Total Score: {getTotalScore()}
+        </div>
       </div>
     </div>
   );

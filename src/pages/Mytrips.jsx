@@ -10,6 +10,8 @@ import ScheduleAndGroupsByDate from '../components/ScheduleAndGroupsByDate';
 const MyTrips = () => {
   const [selectedDateInfo, setSelectedDateInfo] = useState({ date: null, golfTripId: null });
   const [myTrips, setMyTrips] = useState([]);
+  const [showLeftComponent, setShowLeftComponent] = useState(true); // New state for sidebar visibility
+
   const auth = getAuth();
   const golferId = auth.currentUser?.uid;
 
@@ -56,17 +58,29 @@ const MyTrips = () => {
     const handleDateSelect = (date, golfTripId) => {
       setSelectedDateInfo({ date, golfTripId }); // Update the selected date, trip ID, and group ID
     };
+
+    // Callback function to hide the Left Component
+  const handleHideLeftComponent = () => {
+    setShowLeftComponent(false);
+  };
+
+  // Callback function to show the Left Component
+  const handleShowLeftComponent = () => {
+    setShowLeftComponent(true);
+  };
   
     return (
       <div className="flex justify-center px-6 py-12">
         <div className="max-w-7xl w-full mx-auto">
           <div className="flex flex-col md:flex-row md:items-start gap-8">
-            {/* Left Component */}
-            <div className="flex-shrink-0 w-full md:w-1/3">
-              <GolferItem golferRef={golferId} />
-              <GolferTripItem onDateSelect={handleDateSelect} />
-            </div>
-    
+            {/* Left Components - Conditionally render the left component based on left component state */}
+              {showLeftComponent && (
+                <div className="flex-shrink-0 w-full md:w-1/3">
+                  <GolferItem golferRef={golferId} />
+                  <GolferTripItem onDateSelect={handleDateSelect} />
+                </div>
+              )}
+
             {/* Right Components */}
             <div className="w-full">
               {/* Render ScheduleAndGroupsByDate if a date is selected */}
@@ -82,6 +96,8 @@ const MyTrips = () => {
                 <DateDetails
                   selectedDate={selectedDateInfo.date}
                   golferId={golferId}
+                  onHideLeftComponent={handleHideLeftComponent}
+                  onShowLeftComponent={handleShowLeftComponent}
                 />
               )}
             </div>
