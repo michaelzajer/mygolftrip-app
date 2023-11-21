@@ -17,33 +17,51 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
   useEffect(() => {
     const fetchDateDetails = async () => {
       if (!selectedDate) return;
-
-      // Format the selected date once, so it can be used in the loop and in rendering
+  
       const formattedDate = moment(selectedDate, 'ddd, DD-MM-YY').format('ddd - DD-MM-YY');
       const tripsSnapshot = await getDocs(collection(db, 'golfTrips'));
       let details = [];
-
+  
       for (const tripDoc of tripsSnapshot.docs) {
         const groupsCollectionRef = collection(db, `golfTrips/${tripDoc.id}/groups`);
         const groupsSnapshot = await getDocs(groupsCollectionRef);
-
+  
         for (const groupDoc of groupsSnapshot.docs) {
           const groupData = groupDoc.data();
-          // Convert the group date to the same format as formattedDate before comparing
           const groupFormattedDate = moment(groupData.groupDate).format('ddd - DD-MM-YY');
-
+  
           if (groupFormattedDate === formattedDate) {
             const golfersCollectionRef = collection(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/golfers`);
             const golfersSnapshot = await getDocs(golfersCollectionRef);
-
-            const golfers = golfersSnapshot.docs.map(golferDoc => ({
-              ...golferDoc.data(),
-              golferId: golferDoc.id,
-            }));
-
+  
+            let golfers = [];
+            for (const golferDoc of golfersSnapshot.docs) {
+              let golferScore = 0; // Default score
+              let golferDailyHcp = 0; // Default handicap
+  
+              const scorecardsRef = collection(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/golfers/${golferDoc.id}/scorecards`);
+              const scorecardsSnapshot = await getDocs(scorecardsRef);
+  
+              // Find the scorecard with a matching groupDate, assuming that's the identifier for the current round
+              const scorecardDoc = scorecardsSnapshot.docs.find(doc => moment(doc.data().groupDate).format('ddd - DD-MM-YY') === formattedDate);
+  
+              if (scorecardDoc) {
+                const scorecardData = scorecardDoc.data();
+                golferScore = scorecardData.totalScore || 0;
+                golferDailyHcp = scorecardData.dailyHandicap || 0;
+              }
+  
+              golfers.push({
+                ...golferDoc.data(),
+                golferId: golferDoc.id,
+                score: golferScore,
+                dailyHcp: golferDailyHcp,
+              });
+            }
+  
             details.push({
-              tripId: tripDoc.id, // Store the trip ID
-              groupId: groupDoc.id, // Store the group ID
+              tripId: tripDoc.id,
+              groupId: groupDoc.id,
               tripName: tripDoc.data().golfTripName,
               groupName: groupData.groupName,
               groupDate: groupFormattedDate,
@@ -52,10 +70,10 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
           }
         }
       }
-
+  
       setDateDetails(details);
     };
-
+  
     fetchDateDetails();
   }, [selectedDate]);
 

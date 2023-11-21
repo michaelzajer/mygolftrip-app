@@ -20,6 +20,8 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   const [golferGaDetails, setGolferGaDetails] = useState({})
   const [stablefordPoints, setStablefordPoints] = useState(0);
   const [runningStablefordTotal, setRunningStablefordTotal] = useState(0);
+  const [groupName, setGroupName] = useState('');
+  const [groupDate, setGroupDate] = useState('');
 
 
 
@@ -35,20 +37,28 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   }, [scorecard]);
 
   useEffect(() => {
-    // Fetch and set initial daily handicap
-    const fetchGolferDetails = async () => {
+    // Fetch and set initial daily handicap and group details
+    const fetchGolferAndGroupDetails = async () => {
       const golferRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', golferId);
       const golferSnap = await getDoc(golferRef);
       if (golferSnap.exists()) {
-        // Fetch additional golfer details here
-        const data = golferSnap.data();
-        setGolferDetails(data); // This will store all the golfer details
-        setDailyHcp(data.dailyHcp || ''); // Set daily handicap
+        const golferData = golferSnap.data();
+        setGolferDetails(golferData);
+        setDailyHcp(golferData.dailyHcp || '');
+        
+        // Fetch group details
+        const groupRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId);
+        const groupSnap = await getDoc(groupRef);
+        if (groupSnap.exists()) {
+          const groupData = groupSnap.data();
+          setGroupName(groupData.groupName);
+          setGroupDate(groupData.groupDate);
+        }
       }
     };
-
-    fetchGolferDetails();
-  }, [golferId, golfTripId, dGroupId]); // Ensure this only runs once when the component mounts
+  
+    fetchGolferAndGroupDetails();
+  }, [golferId, golfTripId, dGroupId]); // Dependencies array
 
   useEffect(() => {
     // Fetch and set initial GA handicap
@@ -99,8 +109,6 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
     setGolferDailyHandicap();
   }, [golferGaDetails.handicapGA, scorecard]); // Run this hook when the GA Handicap or scorecard changes
   
-  
-
   useEffect(() => {
     const fetchScorecard = async () => {
       const scorecardsRef = collection(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', dGolferId, 'scorecards');
@@ -108,42 +116,48 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
       if (!snapshot.empty) {
         const scorecardData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))[0];
         const holesMap = {};
+        let stablefordTotal = 0;
+    
+        // Iterate over holes and calculate the running total of Stableford points
         for (const holePath of scorecardData.holes) {
           const holeRef = doc(db, holePath);
           const holeSnap = await getDoc(holeRef);
           if (holeSnap.exists()) {
             const holeData = holeSnap.data();
             holesMap[holeData.holeNumber] = holeData;
+  
+            // Add Stableford points if they exist for this hole
+            if (scorecardData.stablefordPoints && scorecardData.stablefordPoints[holeData.holeNumber]) {
+              stablefordTotal += scorecardData.stablefordPoints[holeData.holeNumber];
+            }
           }
         }
+  
         setHolesDetailsMap(holesMap);
         setScorecard(scorecardData);
+        setRunningStablefordTotal(stablefordTotal); // Update the running total
         updateFormInitialValues(scorecardData, currentHoleNumber);
-
-  // Fetch Course details
-  if (scorecardData.courseRef) {
-    const courseRef = doc(db, scorecardData.courseRef); // Convert string path to DocumentReference
-    getDoc(courseRef).then(courseSnapshot => {
-      if (courseSnapshot.exists()) {
-        setCourseName(courseSnapshot.data().courseName); // Assuming the course document has a 'name' field
-        // ... You can set other course-related state here if needed
-      }
-    });
-  }
-
-  // Fetch Tee details
-  if (scorecardData.teeRef) {
-    const teeRef = doc(db, scorecardData.teeRef); // Convert string path to DocumentReference
-    getDoc(teeRef).then(teeSnapshot => {
-      if (teeSnapshot.exists()) {
-        setTeeName(teeSnapshot.data().teeName); // Assuming the tee document has a 'name' field
-        // ... You can set other tee-related state here if needed
-      }
-    });
-  }
+  
+        // Fetch Course details
+        if (scorecardData.courseRef) {
+          const courseRef = doc(db, scorecardData.courseRef);
+          const courseSnapshot = await getDoc(courseRef);
+          if (courseSnapshot.exists()) {
+            setCourseName(courseSnapshot.data().courseName);
+          }
+        }
+  
+        // Fetch Tee details
+        if (scorecardData.teeRef) {
+          const teeRef = doc(db, scorecardData.teeRef);
+          const teeSnapshot = await getDoc(teeRef);
+          if (teeSnapshot.exists()) {
+            setTeeName(teeSnapshot.data().teeName);
+          }
+        }
       }
     };
-    
+  
     fetchScorecard();
   }, [golferId, golfTripId, dGroupId, dGolferId]);
 
@@ -163,48 +177,41 @@ const calculateStablefordPoints = (score, par, dailyHcp, holeIndex) => {
   if (netScore === 1) return 1;
   return 0;
 };
-
-// Function to increment the score
-const incrementScore = (currentScore, holeNumber) => {
-  const currentStablefordPoints = calculateStablefordPoints(currentScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
+// Increment Score Function
+const incrementScore = async (currentScore, holeNumber) => {
   const newScore = Number(currentScore) + 1;
   const newStablefordPoints = calculateStablefordPoints(newScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
 
-  // Update form, state, and total points
   formikRef.current.setFieldValue('score', newScore);
   setStablefordPoints(newStablefordPoints); 
-  setRunningStablefordTotal((prevTotal) => prevTotal + (newStablefordPoints - currentStablefordPoints));
 
-  // Update the scorecard scores with the new score
-  const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
-  saveScore(newScore, currentHoleNumber); // Update the score for the current hole
-  updateTotalScore(updatedScores); // Update the running total
+  await saveScore(newScore, holeNumber, newStablefordPoints);
+  await fetchAndUpdateRunningTotals();
 };
 
-
-// Function to decrement the score
-const decrementScore = (currentScore, holeNumber) => {
-  const currentStablefordPoints = calculateStablefordPoints(currentScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
+// Decrement Score Function
+const decrementScore = async (currentScore, holeNumber) => {
   const newScore = Math.max(Number(currentScore) - 1, 0);
   const newStablefordPoints = calculateStablefordPoints(newScore, currentHoleDetails.holePar, dailyHcp, currentHoleDetails.holeIndex);
 
-  // Update form, state, and total points
   formikRef.current.setFieldValue('score', newScore);
   setStablefordPoints(newStablefordPoints); 
-  setRunningStablefordTotal((prevTotal) => prevTotal + (newStablefordPoints - currentStablefordPoints));
 
-
-  // Update the scorecard scores with the new score
-  const updatedScores = { ...scorecard.scores, [holeNumber]: newScore };
-  saveScore(newScore, currentHoleNumber); // Update the score for the current hole
-  updateTotalScore(updatedScores); // Update the running total
+  await saveScore(newScore, holeNumber, newStablefordPoints);
+  await fetchAndUpdateRunningTotals();
 };
 
+  // Fetch the latest scorecard data from Firestore
+const fetchAndUpdateRunningTotals = async () => {
+  const scorecardSnapshot = await getDoc(doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', dGolferId, 'scorecards', scorecard.id));
+  if (scorecardSnapshot.exists()) {
+    const scorecardData = scorecardSnapshot.data();
+    const newRunningTotal = Object.values(scorecardData.scores).reduce((sum, score) => sum + (score || 0), 0);
+    const newRunningStablefordTotal = Object.values(scorecardData.stablefordPoints || {}).reduce((sum, points) => sum + points, 0);
 
-// Function to update the total score
-const updateTotalScore = (updatedScores) => {
-  const total = Object.values(updatedScores).reduce((sum, score) => sum + (score || 0), 0);
-  setRunningTotal(total);
+    setRunningTotal(newRunningTotal);
+    setRunningStablefordTotal(newRunningStablefordTotal);
+  }
 };
 
   const updateFormInitialValues = (scorecardData, holeNumber) => {
@@ -213,49 +220,45 @@ const updateTotalScore = (updatedScores) => {
     setInitialValues({ score });
 };
 
-// Function to handle focus on the daily handicap input
-  const handleHcpFocus = () => {
-    setIsEditingHcp(true);
-  };
-
-  // Function to handle blur on the daily handicap input
-  const handleHcpBlur = () => {
-    setIsEditingHcp(false);
-    updateDailyHcp(dailyHcp); // Update Firestore when focus is lost
-  };
-
-  const saveScore = async (score, holeNumber) => {
+  // Save Score and Stableford points to database
+  const saveScore = async (score, holeNumber, stablefordPoints) => {
     const numericScore = Number(score);
     const holeId = Object.keys(holesDetailsMap).find(key => holesDetailsMap[key].holeNumber === holeNumber);
   
     if (numericScore && scorecard && holeId) {
-      const updatedScores = {
-        ...scorecard.scores,
-        [holeId]: numericScore,
+      // Prepare updates for scores and Stableford points
+      const scoreUpdate = {
+        [`scores.${holeId}`]: numericScore,
+        [`stablefordPoints.${holeId}`]: stablefordPoints,
+        groupName: groupName,
+        groupDate: groupDate,
       };
-  
-      // Update the scorecard state
-      setScorecard(prevScorecard => ({
-        ...prevScorecard,
-        scores: updatedScores,
-      }));
-  
-      // Prepare the update object
-      const scoreUpdate = { [`scores.${holeId}`]: numericScore };
   
       // Update Firestore
       const scorecardRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', dGolferId, 'scorecards', scorecard.id);
       try {
         await updateDoc(scorecardRef, scoreUpdate);
-        // Update the total score
-        updateTotalScore(updatedScores);
+  
+        // Update state to trigger re-render
+        setScorecard(prevScorecard => ({
+          ...prevScorecard,
+          scores: {
+            ...prevScorecard.scores,
+            [holeId]: numericScore
+          },
+          stablefordPoints: {
+            ...prevScorecard.stablefordPoints,
+            [holeId]: stablefordPoints
+          },
+          groupName: groupName,
+          groupDate: groupDate,
+        }));
       } catch (error) {
         console.error(`Error saving score for hole ${holeNumber}: `, error);
       }
     }
   };
   
-
   const completeRound = async () => {
     if (!scorecard || !golferId) {
       console.error("Missing scorecard or golfer information");
@@ -264,15 +267,23 @@ const updateTotalScore = (updatedScores) => {
   
     const totalScore = Object.values(scorecard.scores).reduce((sum, score) => sum + (score || 0), 0);
   
-    // Reference to the golfer's document in Firestore
-    const golferRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', golferId);
+    // Reference to the scorecard's document in Firestore
+    const scorecardRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', dGolferId, 'scorecards', scorecard.id);
+  
+    console.log(`Updating total score for golfer ${golferId}`);
+    console.log(`GA Handicap: ${golferGaDetails.handicapGA}, Daily Handicap: ${dailyHcp}`);
   
     try {
-      // Update the golfer's score in Firestore
-      await updateDoc(golferRef, { score: totalScore });
-      console.log(`Total score of ${totalScore} updated for golfer ${golferId}`);
+      // Update the scorecard in Firestore with the total score and handicaps
+      await updateDoc(scorecardRef, {
+        totalScore: totalScore,
+        gaHandicap: golferGaDetails.handicapGA,
+        dailyHandicap: dailyHcp,
+        groupName: groupName,
+        groupDate: groupDate
+      });
     } catch (error) {
-      console.error("Error updating golfer's score: ", error);
+      console.error("Error updating scorecard: ", error);
     }
   
     setRoundComplete(true);
@@ -321,7 +332,6 @@ const updateTotalScore = (updatedScores) => {
     const golferRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', golferId);
     try {
       await updateDoc(golferRef, { dailyHcp: newHcp });
-      console.log(`Daily handicap updated to ${newHcp}`);
     } catch (error) {
       console.error("Error updating daily handicap: ", error);
     }
@@ -349,8 +359,6 @@ const updateTotalScore = (updatedScores) => {
 
   const currentHoleDetails = holesDetailsMap[currentHoleNumber];
   const currentHoleId = currentHoleDetails.id;
-
- 
 
   return (
     <div className="bg-white shadow-lg rounded-lg p-4">
@@ -413,14 +421,16 @@ const updateTotalScore = (updatedScores) => {
                   >
                     -
                   </button>
+                  <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
                   <input
                     id="score"
                     name="score"
                     type="text"
                     readOnly
                     value={values.score}
-                    className="border rounded text-center text-xl w-10"
+                    className="border rounded text-center text-xl w-12"
                   />
+                  </div>
                   <button
                     type="button"
                     onClick={() => incrementScore(values.score, currentHoleNumber)}
@@ -431,29 +441,28 @@ const updateTotalScore = (updatedScores) => {
                 </div>
                 <div className="text-m">Strokes</div>
               </div>
-              <div className="flex flex-col items-center flex-grow sm:flex-grow-0 mb-2 sm:mb-0">
+              <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
                 <input
                   id="stableford"
                   name="stableford"
                   type="text"
                   readOnly
                   value={stablefordPoints}
-                  className="border rounded text-center text-xl w-10"
+                  className="border rounded text-center text-xl w-12"
                 />
                 <div className="text-m">Points</div>
               </div>
               <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
-           {/*  <input
-                id="runningStablefordTotal"
-                name="runningStablefordTotal"
-                type="text"
-                readOnly
-                value={runningStablefordTotal}
-                className="border rounded text-center text-xl w-12"
-              />
-              <div className="text-sm">Total Points</div>
-        */}
-            </div>
+                <input
+                  id="runningStablefordTotal"
+                  name="runningStablefordTotal"
+                  type="text"
+                  readOnly
+                  value={runningStablefordTotal}
+                  className="border rounded text-center text-xl w-12"
+                />
+                <div className="text-sm">Total Points</div>
+              </div>
               <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
                 <input
                   id="totalscore"
