@@ -384,28 +384,28 @@ const fetchAndUpdateRunningTotals = async () => {
           {/* Golfer information */}
           <div className="flex flex-row justify-center items-center ml-auto mr-auto mb-1">
             <div className="mb-1 sm:mb-0">
-              <span className="flex-1/3 text-sm mr-2">{golferDetails.golferName}</span>
-              <span className="flex-1/3 text-sm mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
-              <span className="flex-1/3 text-sm mr-1">Daily Hcp: {dailyHcp}</span>
+              <span className="flex-1/3 text-1xl mr-2">{golferDetails.golferName}</span>
+              <span className="flex-1/3 text-1xl mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
+              <span className="flex-1/3 text-1xl mr-1">Daily Hcp: {dailyHcp}</span>
             </div>
           </div>
              {/* Hole information with responsive grid */}
              <div className="flex justify-center items-center space-x-4">
               <div>
-                <div className="flex-1/4 font-semibold text-center">{currentHoleDetails.holeNumber}</div>
-                <div className="flex-1/4 text-sm text-center">Hole</div>
+                <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holeNumber}</div>
+                <div className="flex-1/4  text-center text-2xl">Hole</div>
               </div>
               <div>
-                <div className="flex-1/4 font-semibold text-center">{currentHoleDetails.holeLength} mtrs</div>
-                <div className="flex-1/4 text-sm text-center">Length</div>
+                <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holeLength} mtrs</div>
+                <div className="flex-1/4 text-center text-2xl">Length</div>
               </div>
               <div>
-                <div className="flex-1/4 font-semibold text-center">{currentHoleDetails.holePar}</div>
-                <div className="flex-1/4 text-sm text-center">Par</div>
+                <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holePar}</div>
+                <div className="flex-1/4 text-center text-2xl">Par</div>
               </div>
               <div>
-                <div className="flex-1/4 font-semibold text-center">{currentHoleDetails.holeIndex}</div>
-                <div className="flex-1/4 text-sm text-center">Index</div>
+                <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holeIndex}</div>
+                <div className="flex-1/4  text-center text-2xl">Index</div>
               </div>
             </div>
 
@@ -416,20 +416,20 @@ const fetchAndUpdateRunningTotals = async () => {
                     <button
                       type="button"
                       onClick={() => decrementScore(values.score, currentHoleNumber)}
-                      className="bg-red-300 hover:bg-red-400 text-black py-4 px-4 rounded text-4xl flex-1/3"
+                      className="bg-red-300 hover:bg-red-400 text-black py-4 px-4 rounded text-5xl flex-1/3"
                     >
                       -
                     </button>
                 </div>
                 <div className="flex-1/3 items-center px-2">
-                <div className="text-l text-center font-bold text-4xl">{values.score}</div>
-                      <div className="justify-center text-center text-sm">Strokes</div>
+                <div className="text-l text-center font-bold text-5xl">{values.score}</div>
+                      <div className="justify-center text-center text-2xl">Strokes</div>
                   </div>
                   <div className="flex-1/3 items-center px-2">
                     <button
                       type="button"
                       onClick={() => incrementScore(values.score, currentHoleNumber)}
-                      className="bg-green-300 hover:bg-green-400 text-black py-4 px-4 rounded text-4xl flex-1/3"
+                      className="bg-green-300 hover:bg-green-400 text-black py-4 px-4 rounded text-5xl flex-1/3"
                     >
                       +
                     </button>
@@ -439,18 +439,18 @@ const fetchAndUpdateRunningTotals = async () => {
 
               <div className="flex justify-center items-center space-x-4">
                 <div className="px-2">
-                  <div className="text-l text-center font-bold">{stablefordPoints}</div>
-                  <div className="text-l text-center mt-1">Points</div>
+                  <div className="text-l text-center font-bold text-2xl">{stablefordPoints}</div>
+                  <div className="text-l text-center mt-1 text-2xl">Points</div>
                 </div>
 
                 <div className="px-2">
-                <div className="text-l text-center font-bold">{runningStablefordTotal}</div>
-                <div className="text-l text-center mt-1">Total Points</div>
+                <div className="text-l text-center font-bold text-2xl">{runningStablefordTotal}</div>
+                <div className="text-l text-center mt-1 text-2xl">Total Points</div>
                 </div>
 
                 <div className="px-2">
-                <div className="text-l text-center font-bold">{runningTotal}</div>
-                  <div className="text-l text-center mt-1">Total Strokes</div>
+                <div className="text-l text-center font-bold text-2xl">{runningTotal}</div>
+                  <div className="text-l text-center mt-1 text-2xl">Total Strokes</div>
                 </div>
               </div>
           
@@ -460,7 +460,7 @@ const fetchAndUpdateRunningTotals = async () => {
               <button
                 type="button"
                 onClick={() => navigateHoles('prev')}
-                className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm"
+                className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-2xl"
               >
                 Previous
               </button>
@@ -469,7 +469,7 @@ const fetchAndUpdateRunningTotals = async () => {
               <button
                 type="button"
                 onClick={() => navigateHoles('next')}
-                className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm"
+                className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-2xl"
               >
                 Next
               </button>
