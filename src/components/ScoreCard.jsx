@@ -384,28 +384,28 @@ const fetchAndUpdateRunningTotals = async () => {
           {/* Golfer information */}
           <div className="flex flex-row justify-center items-center ml-auto mr-auto mb-1">
             <div className="mb-1 sm:mb-0">
-              <span className="flex-1/3 text-1xl mr-2">{golferDetails.golferName}</span>
-              <span className="flex-1/3 text-1xl mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
-              <span className="flex-1/3 text-1xl mr-1">Daily Hcp: {dailyHcp}</span>
+              <span className="flex-1/3 text-2xl mr-2">{golferDetails.golferName}</span>
+              <span className="flex-1/3 text-2xl mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
+              <span className="flex-1/3 text-2xl mr-1">Daily Hcp: {dailyHcp}</span>
             </div>
           </div>
              {/* Hole information with responsive grid */}
              <div className="flex justify-center items-center space-x-4">
               <div>
                 <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holeNumber}</div>
-                <div className="flex-1/4  text-center text-2xl">Hole</div>
+                <div className="flex-1/4  text-center text-1xl">Hole</div>
               </div>
               <div>
                 <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holeLength} mtrs</div>
-                <div className="flex-1/4 text-center text-2xl">Length</div>
+                <div className="flex-1/4 text-center text-1xl">Length</div>
               </div>
               <div>
                 <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holePar}</div>
-                <div className="flex-1/4 text-center text-2xl">Par</div>
+                <div className="flex-1/4 text-center text-1xl">Par</div>
               </div>
               <div>
                 <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holeIndex}</div>
-                <div className="flex-1/4  text-center text-2xl">Index</div>
+                <div className="flex-1/4  text-center text-1xl">Index</div>
               </div>
             </div>
 
@@ -440,17 +440,17 @@ const fetchAndUpdateRunningTotals = async () => {
               <div className="flex justify-center items-center space-x-4">
                 <div className="px-2">
                   <div className="text-l text-center font-bold text-2xl">{stablefordPoints}</div>
-                  <div className="text-l text-center mt-1 text-2xl">Points</div>
+                  <div className="text-l text-center mt-1 text-1xl">Points</div>
                 </div>
 
                 <div className="px-2">
                 <div className="text-l text-center font-bold text-2xl">{runningStablefordTotal}</div>
-                <div className="text-l text-center mt-1 text-2xl">Total Points</div>
+                <div className="text-l text-center mt-1 text-1xl">Total Points</div>
                 </div>
 
                 <div className="px-2">
                 <div className="text-l text-center font-bold text-2xl">{runningTotal}</div>
-                  <div className="text-l text-center mt-1 text-2xl">Total Strokes</div>
+                  <div className="text-l text-center mt-1 text-1xl">Total Strokes</div>
                 </div>
               </div>
           
