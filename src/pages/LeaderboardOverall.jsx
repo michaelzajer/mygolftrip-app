@@ -1,14 +1,14 @@
 // LeaderboardOverall.jsx
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import moment from 'moment';
 
 const LeaderboardOverall = () => {
   const [golfers, setGolfers] = useState([]);
 
   useEffect(() => {
-    const fetchTrips = async () => {
+    const fetchGolfersWithLeaderboard = async () => {
       const tripsCollectionRef = collection(db, 'golfTrips');
       const tripsSnapshot = await getDocs(tripsCollectionRef);
       let allGolfers = [];
@@ -20,45 +20,68 @@ const LeaderboardOverall = () => {
         for (let groupDoc of groupsSnapshot.docs) {
           const golfersCollectionRef = collection(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/golfers`);
           const golfersSnapshot = await getDocs(golfersCollectionRef);
-          
+
           for (let golferDoc of golfersSnapshot.docs) {
-            const golferData = golferDoc.data();
-            // Here we use Moment.js to format the date
-            const formattedDate = moment(groupDoc.data().groupDate).format('ddd - DD-MM-YY');
-            allGolfers.push({
-              ...golferData,
+            let golferData = {
+              golferName: golferDoc.data().golferName,
               groupName: groupDoc.data().groupName,
-              groupDate: formattedDate, // Formatted date is used here
+              groupDate: '', // Initialize with an empty string
+              totalPoints: 0,
+              totalScore: 0,
+              dailyHandicap: 0,
+              gaHandicap: 0,
               golferId: golferDoc.id,
-            });
+            };
+
+            // Check if leaderboard exists for the golfer
+            const leaderboardDocRef = doc(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/leaderboard/${golferDoc.id}`);
+            const leaderboardDocSnap = await getDoc(leaderboardDocRef);
+
+            if (leaderboardDocSnap.exists()) {
+              const leaderboardData = leaderboardDocSnap.data();
+              golferData = {
+                ...golferData,
+                groupDate: leaderboardData.groupDate ? moment(leaderboardData.groupDate, 'YYYY-MM-DD').format('DD-MM-YYYY') : '',
+                totalPoints: leaderboardData.totalPoints || 0,
+                totalScore: leaderboardData.totalScore || 0,
+                dailyHandicap: leaderboardData.dailyHandicap || 0,
+                gaHandicap: leaderboardData.gaHandicap || 0,
+              };
+            }
+
+            allGolfers.push(golferData);
           }
         }
       }
-  
-      allGolfers.sort((a, b) => Number(b.score) - Number(a.score));
+
+      allGolfers.sort((a, b) => b.totalPoints - a.totalPoints); // Sort by total points
       setGolfers(allGolfers);
     };
-  
-    fetchTrips();
+
+    fetchGolfersWithLeaderboard();
   }, []);
 
   return (
-    <div className="container mx-auto max-w-6xl ">
-      <div className="mb-1 bg-white shadow overflow-hidden rounded-lg">
-        <div className="grid grid-cols-12 gap-4 bg-blue-500 text-white p-4">
-          <p className="col-span-3">Golfer Name</p>
-          <p className="col-span-3">Group Name</p>
-          <p className="col-span-3">Score</p>
-          <p className="col-span-3">Date</p>
-          {/* Add any additional headers */}
+    <div className="container mx-auto max-w-6xl px-4">
+      <div className="mb-4 bg-white shadow overflow-hidden rounded-lg">
+        <div className="bg-blue-500 text-white flex flex-wrap justify-between md:text-sm sm:text-xs font-medium text-center p-2">
+          <div className="flex-1 text-center p-2 md:w-1/6">Date</div>
+          <div className="flex-1 text-center p-2 md:w-1/4">Golfer Name</div>
+          <div className="flex-1 text-center p-2 md:w-1/4">Group Name</div>
+          <div className="flex-1 text-center p-2 md:w-1/6">GA Hcp</div>
+          <div className="flex-1 text-center p-2 md:w-1/6">Daily Hcp</div>
+          <div className="flex-1 text-center p-2 md:w-1/6">Total Points</div>
+          <div className="flex-1 text-center p-2 md:w-1/6">Total Strokes</div>
         </div>
         {golfers.map(golfer => (
-          <div key={golfer.golferId} className="grid grid-cols-12 gap-4 bg-white p-4">
-            <p className="col-span-3">{golfer.golferName}</p>
-            <p className="col-span-3">{golfer.groupName}</p>
-            <p className="col-span-3">{golfer.score}</p>
-            <p className="col-span-3">{golfer.groupDate}</p>
-            {/* Add any additional golfer info */}
+          <div key={golfer.golferId} className="flex flex-wrap items-center text-center border-b md:text-sm sm:text-xs">
+            <div className="flex-1 p-2 md:w-1/6">{golfer.groupDate}</div>
+            <div className="flex-1 p-2 md:w-1/4">{golfer.golferName}</div>
+            <div className="flex-1 p-2 md:w-1/4">{golfer.groupName}</div>
+            <div className="flex-1 p-2 md:w-1/6">{golfer.gaHandicap}</div>
+            <div className="flex-1 p-2 md:w-1/6">{golfer.dailyHandicap}</div>
+            <div className="flex-1 p-2 md:w-1/6">{golfer.totalPoints}</div>
+            <div className="flex-1 p-2 md:w-1/6">{golfer.totalScore}</div>
           </div>
         ))}
       </div>

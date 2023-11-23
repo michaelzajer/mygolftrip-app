@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, doc, getDocs, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { Formik } from 'formik';
 
@@ -221,71 +221,63 @@ const fetchAndUpdateRunningTotals = async () => {
   const saveScore = async (score, holeNumber, stablefordPoints) => {
     const numericScore = Number(score);
     const holeId = Object.keys(holesDetailsMap).find(key => holesDetailsMap[key].holeNumber === holeNumber);
-  
+    
     if (numericScore && scorecard && holeId) {
-      // Prepare updates for scores and Stableford points
-      const scoreUpdate = {
-        [`scores.${holeId}`]: numericScore,
-        [`stablefordPoints.${holeId}`]: stablefordPoints,
-        groupName: groupName,
-        groupDate: groupDate,
-      };
-  
-      // Update Firestore
       const scorecardRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', dGolferId, 'scorecards', scorecard.id);
-      try {
-        await updateDoc(scorecardRef, scoreUpdate);
   
-        // Update state to trigger re-render
-        setScorecard(prevScorecard => ({
-          ...prevScorecard,
-          scores: {
-            ...prevScorecard.scores,
-            [holeId]: numericScore
-          },
-          stablefordPoints: {
-            ...prevScorecard.stablefordPoints,
-            [holeId]: stablefordPoints
-          },
+      const scorecardSnapshot = await getDoc(scorecardRef);
+      if (scorecardSnapshot.exists()) {
+        const scorecardData = scorecardSnapshot.data();
+        const newScores = { ...scorecardData.scores, [holeId]: numericScore };
+        const newStablefordPoints = { ...scorecardData.stablefordPoints, [holeId]: stablefordPoints };
+  
+        const newTotalScore = Object.values(newScores).reduce((sum, score) => sum + (score || 0), 0);
+        const newTotalPoints = Object.values(newStablefordPoints).reduce((sum, points) => sum + points, 0);
+  
+        const scoreUpdate = {
+          [`scores.${holeId}`]: numericScore,
+          [`stablefordPoints.${holeId}`]: stablefordPoints,
+          totalScore: newTotalScore,
+          totalPoints: newTotalPoints,
           groupName: groupName,
           groupDate: groupDate,
-        }));
-      } catch (error) {
-        console.error(`Error saving score for hole ${holeNumber}: `, error);
+          golferId: dGolferId,
+        };
+  
+        try {
+          await updateDoc(scorecardRef, scoreUpdate);
+  
+          setScorecard(prevScorecard => ({
+            ...prevScorecard,
+            scores: newScores,
+            stablefordPoints: newStablefordPoints,
+            totalScore: newTotalScore,
+            totalPoints: newTotalPoints,
+            groupName: groupName,
+            groupDate: groupDate,
+          }));
+  
+          const leaderboardRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'leaderboard', dGolferId);
+          const leaderboardUpdate = {
+            totalScore: newTotalScore,
+            totalPoints: newTotalPoints,
+            gaHandicap: golferGaDetails.handicapGA,
+            dailyHandicap: dailyHcp,
+            groupName: groupName,
+            groupDate: groupDate,
+            golferId: dGolferId,
+          };
+          await setDoc(leaderboardRef, leaderboardUpdate, { merge: true });
+  
+        } catch (error) {
+          console.error(`Error saving score for hole ${holeNumber}: `, error);
+        }
       }
     }
   };
   
-  const completeRound = async () => {
-    if (!scorecard || !golferId) {
-      console.error("Missing scorecard or golfer information");
-      return;
-    }
-  
-    const totalScore = Object.values(scorecard.scores).reduce((sum, score) => sum + (score || 0), 0);
-    const totalPoints = Object.values(scorecard.stablefordPoints || {}).reduce((sum, points) => sum + points, 0);
-  
-    // Reference to the scorecard's document in Firestore
-    const scorecardRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', dGolferId, 'scorecards', scorecard.id);
-  
-    console.log(`Updating total score and points for golfer ${golferId}`);
-    console.log(`GA Handicap: ${golferGaDetails.handicapGA}, Daily Handicap: ${dailyHcp}`);
-  
-    try {
-      // Update the scorecard in Firestore with the total score, total points, and handicaps
-      await updateDoc(scorecardRef, {
-        totalScore: totalScore,
-        totalPoints: totalPoints,
-        gaHandicap: golferGaDetails.handicapGA,
-        dailyHandicap: dailyHcp,
-        groupName: groupName,
-        groupDate: groupDate
-      });
-      console.log(`Total score of ${totalScore}, Total Points: ${totalPoints}, GA Handicap: ${golferGaDetails.handicapGA}, and Daily Handicap: ${dailyHcp} updated for scorecard ${scorecard.id}`);
-    } catch (error) {
-      console.error("Error updating scorecard: ", error);
-    }
-  
+  const completeRound = () => {
+    // Simply set the round as complete and close the scorecard
     setRoundComplete(true);
     onClose(); // Call the onClose function passed as a prop
   };

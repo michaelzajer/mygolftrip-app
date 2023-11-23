@@ -37,8 +37,6 @@ const ScheduleAndGroupsByDate = ({ selectedDate, golfTripId }) => {
       {schedule.length > 0 ? (
         schedule.map((item, index) => (
           <div key={index}>
-            {/* Render your schedule details here */}
-            <p>{item.courseName} - {item.teeTime}</p>
             
           </div>
         ))
