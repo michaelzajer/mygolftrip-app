@@ -382,13 +382,13 @@ const fetchAndUpdateRunningTotals = async () => {
         {({ values, handleSubmit, isSubmitting }) => (
           <form onSubmit={handleSubmit} className="space-y-4">
           {/* Golfer information */}
-          <div className="flex flex-row justify-center items-center ml-auto mr-auto mb-1">
-            <div className="mb-1 sm:mb-0">
-              <span className="flex-1/3 text-2xl mr-2">{golferDetails.golferName}</span>
-              <span className="flex-1/3 text-2xl mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
-              <span className="flex-1/3 text-2xl mr-1">Daily Hcp: {dailyHcp}</span>
+          <div className="flex justify-center items-center space-x-4">
+              <span className="flex-1 text-2xl mr-2 text-center">{golferDetails.golferName}</span>
+              </div>
+              <div className="flex justify-center items-center">
+              <span className="flex-1/2 text-2xl mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
+              <span className="flex-1/2 text-2xl mr-1">Daily Hcp: {dailyHcp}</span>
             </div>
-          </div>
              {/* Hole information with responsive grid */}
              <div className="flex justify-center items-center space-x-4">
               <div>
