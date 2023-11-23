@@ -134,7 +134,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
         </button>
   
         {/* Column Headers */}
-        <div className="flex justify-between mb-4 font-semibold">
+        <div className="flex justify-between mb-4 text-sm sm:text-sm lg:text-m font-medium text-center border-b">
           <div className="w-1/12 text-center">Hole</div>
           <div className="w-1/12 text-center">Par</div>
           <div className="w-1/12 text-center">Index</div>
@@ -150,7 +150,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
             const holeDetail = holesDetailsMap[holeId];
             const score = scorecard.scores[holeId];
             return (
-              <div key={holeId} className="flex justify-between items-center mb-2">
+              <div key={holeId} className="flex justify-between items-center mb-2 text-sm sm:text-sm lg:text-m">
                 <div className="w-1/12 text-center">{holeDetail.holeNumber}</div>
                 <div className="w-1/12 text-center">{holeDetail.holePar}</div>
                 <div className="w-1/12 text-center">{holeDetail.holeIndex}</div>
@@ -160,7 +160,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
                       type="number"
                       value={inputScore}
                       onChange={(e) => setInputScore(e.target.value)}
-                      className="border rounded px-2 py-1 text-sm w-16 sm:w-16"
+                      className="border rounded px-2 py-1 w-16 sm:w-16 text-sm sm:text-sm lg:text-m"
                       />
                   ) : (
                     <span className="text-center">{score !== undefined ? score : 'Incomplete'}</span>
@@ -175,7 +175,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
                       <button
                         type="button"
                         onClick={() => handleScoreUpdate(holeDetail.holeNumber, Number(inputScore))}
-                        className="bg-green-500 hover:bg-green-700 text-white py-1 px-2 rounded text-xs text-sm sm:px-3"
+                        className="bg-green-500 hover:bg-green-700 text-white py-1 px-2 rounded text-sm sm:text-sm lg:text-m sm:px-3"
                         >
                         Update
                       </button>
@@ -185,7 +185,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
                           setEditHole(null);
                           setInputScore(score.toString());
                         }}
-                        className="bg-gray-500 hover:bg-gray-700 text-white py-1 px-2 rounded text-xs"
+                        className="bg-gray-500 hover:bg-gray-700 text-white py-1 px-2 rounded text-sm sm:text-sm lg:text-m"
                       >
                         Cancel
                       </button>
@@ -193,7 +193,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
                   ) : (
                     <button 
                       onClick={() => setEditHole(holeDetail.holeNumber)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs"
+                      className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded text-sm sm:text-sm lg:text-m"
                     >
                       Edit Strokes
                     </button>
@@ -202,7 +202,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
               </div>
             );
           })}
-        <div className="text-lg font-semibold text-center">
+        <div className="font-semibold text-center text-sm sm:text-sm lg:text-m">
           Total Score: {getTotalScore()}
         </div>
       </div>

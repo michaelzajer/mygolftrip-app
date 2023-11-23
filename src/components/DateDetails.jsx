@@ -38,24 +38,30 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
             for (const golferDoc of golfersSnapshot.docs) {
               let golferScore = 0; // Default score
               let golferDailyHcp = 0; // Default handicap
+              let golferGaHcp = 0;
+              let golferStableFordPoints = 0;
   
               const scorecardsRef = collection(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/golfers/${golferDoc.id}/scorecards`);
               const scorecardsSnapshot = await getDocs(scorecardsRef);
   
               // Find the scorecard with a matching groupDate, assuming that's the identifier for the current round
               const scorecardDoc = scorecardsSnapshot.docs.find(doc => moment(doc.data().groupDate).format('ddd - DD-MM-YY') === formattedDate);
-  
+             
               if (scorecardDoc) {
                 const scorecardData = scorecardDoc.data();
                 golferScore = scorecardData.totalScore || 0;
                 golferDailyHcp = scorecardData.dailyHandicap || 0;
+                golferGaHcp = scorecardData.gaHandicap || 0;
+                golferStableFordPoints = scorecardData.totalPoints || 0;
               }
-  
               golfers.push({
                 ...golferDoc.data(),
                 golferId: golferDoc.id,
                 score: golferScore,
                 dailyHcp: golferDailyHcp,
+                gaHcp: golferGaHcp,
+                stblFdPoints: golferStableFordPoints
+               
               });
             }
   
@@ -111,7 +117,7 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
 
   return (
     <div>
-      {viewRoundOpen ? (
+       {viewRoundOpen ? (
         <ViewRound
           dGroupId={activeScorecardInfo.groupId}
           dGolferId={activeScorecardInfo.golferId}
@@ -120,62 +126,58 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
         />
       ) : (
         <>
-          {dateDetails.length > 0 ? (
-            dateDetails.map((detail, index) => (
-              <div key={index} className="mb-4">
-                <div className="mt-4 bg-white shadow-lg rounded-lg">
-                  <div className="flex justify-between bg-blue-500 text-white text-center py-2 rounded-t-lg">
-                    <h3 className="text-m font-semibold mb-2 px-2 self-center">
-                      {detail.groupDate}
-                    </h3>
-                    <h3 className="text-m font-semibold mb-2 flex-grow text-center">
-                      {detail.groupName}
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-12 gap-2 p-2 font-medium text-m border-b">
-                    <div className="col-span-4">Golfer Name</div>
-                    <div className="col-span-2">Daily Hcp</div>
-                    <div className="col-span-2">Score</div>
-                    <div className="col-span-1">Actions</div>
-                  </div>
-                  {detail.golfers.map(golfer => (
-                    <div key={golfer.golferId} className="grid grid-cols-12 gap-2 p-2 border-b">
-                      <div className="col-span-4">{golfer.golferName}</div>
-                      <div className="col-span-2">
-                        <span>{golfer.dailyHcp}</span>
-                      </div>
-                      <div className="col-span-2">
-                        <span>{golfer.score}</span>
-                      </div>
-                      <div className="col-span-1 flex justify-center items-center">
-                        {golfer.golferId === golferId && (
-                          <button
-                            onClick={() => handleOpenScoreCard(detail.tripId, detail.groupId, golfer.golferId)}
-                            className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-xs"
-                          >
-                            ScoreCard
-                          </button>
-                        )}
-                      </div>
-                      <div className="col-span-2 text-center">
-                        {golfer.golferId === golferId && (
-                          <button
-                            onClick={() => handleOpenViewRound(detail.tripId, detail.groupId, golfer.golferId)}
-                            className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-xs ml-2"
-                          >
-                            View Round
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+      {dateDetails.length > 0 ? (
+        dateDetails.map((detail, index) => (
+          <div key={index} className="mb-4">
+            <div className="mt-4 bg-white shadow-lg rounded-lg">
+              <div className="flex flex-wrap items-center justify-between bg-blue-500 text-white py-2 px-4 rounded-t-lg">
+                <h3 className="text-sm sm:text-m lg:text-m font-semibold">{detail.groupDate}</h3>
+                <h3 className="text-sm sm:text-m lg:text-m font-semibold">{detail.groupName}</h3>
+              </div>
+              <div className="text-sm sm:text-sm lg:text-m font-medium text-center border-b">
+                <div className="flex justify-around p-2">
+                  <div className="w-2/6 px-1">Golfer Name</div>
+                  <div className="w-1/6 px-1">GA Hcp</div>
+                  <div className="w-1/6 px-1">Daily Hcp</div>
+                  <div className="w-1/6 px-1">Strokes</div>
+                  <div className="w-1/6 px-1">Points</div>
+                  <div className="w-2/6 px-1">Actions</div>
                 </div>
               </div>
-            ))
-          ) : (
-            <p>No details available for this date.</p>
-          )}
-        </>
+              {detail.golfers.map(golfer => (
+                <div key={golfer.golferId} className=" text-sm sm:text-sm flex items-center justify-between border-b">
+                  <div className="w-2/6 text-center p-2 flex-wrap">{golfer.golferName}</div>
+                  <div className="w-1/6 text-center p-2">{golfer.gaHcp}</div>
+                  <div className="w-1/6 text-center p-2">{golfer.dailyHcp}</div>
+                  <div className="w-1/6 text-center p-2">{golfer.score}</div>
+                  <div className="w-1/6 text-center p-2">{golfer.stblFdPoints}</div>
+                  <div className="w-2/6 text-center p-2">
+                  {golfer.golferId === golferId && (
+                    <button
+                      onClick={() => handleOpenScoreCard(detail.tripId, detail.groupId, golfer.golferId)}
+                      className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs sm:px-1"
+                    >
+                      ScoreCard
+                    </button>
+                     )}
+                     {golfer.golferId === golferId && (
+                    <button
+                      onClick={() => handleOpenViewRound(detail.tripId, detail.groupId, golfer.golferId)}
+                      className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs sm:px-1"
+                    >
+                      View Round
+                    </button>
+                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      ) : (
+        <p>No details available for this date.</p>
+      )}
+      </>
       )}
     </div>
   );

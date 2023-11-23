@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, doc, getDocs, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { Formik, Field } from 'formik';
+import { Formik } from 'formik';
 
 const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   const [scorecard, setScorecard] = useState(null);
@@ -22,9 +22,6 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   const [runningStablefordTotal, setRunningStablefordTotal] = useState(0);
   const [groupName, setGroupName] = useState('');
   const [groupDate, setGroupDate] = useState('');
-
-
-
   const formikRef = useRef();
   const auth = getAuth();
   const golferId = auth.currentUser?.uid;
@@ -266,22 +263,25 @@ const fetchAndUpdateRunningTotals = async () => {
     }
   
     const totalScore = Object.values(scorecard.scores).reduce((sum, score) => sum + (score || 0), 0);
+    const totalPoints = Object.values(scorecard.stablefordPoints || {}).reduce((sum, points) => sum + points, 0);
   
     // Reference to the scorecard's document in Firestore
     const scorecardRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', dGolferId, 'scorecards', scorecard.id);
   
-    console.log(`Updating total score for golfer ${golferId}`);
+    console.log(`Updating total score and points for golfer ${golferId}`);
     console.log(`GA Handicap: ${golferGaDetails.handicapGA}, Daily Handicap: ${dailyHcp}`);
   
     try {
-      // Update the scorecard in Firestore with the total score and handicaps
+      // Update the scorecard in Firestore with the total score, total points, and handicaps
       await updateDoc(scorecardRef, {
         totalScore: totalScore,
+        totalPoints: totalPoints,
         gaHandicap: golferGaDetails.handicapGA,
         dailyHandicap: dailyHcp,
         groupName: groupName,
         groupDate: groupDate
       });
+      console.log(`Total score of ${totalScore}, Total Points: ${totalPoints}, GA Handicap: ${golferGaDetails.handicapGA}, and Daily Handicap: ${dailyHcp} updated for scorecard ${scorecard.id}`);
     } catch (error) {
       console.error("Error updating scorecard: ", error);
     }
@@ -327,16 +327,6 @@ const fetchAndUpdateRunningTotals = async () => {
     return displayScores();
   }
 
-  // Function to update daily handicap in Firestore
-  const updateDailyHcp = async (newHcp) => {
-    const golferRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'golfers', golferId);
-    try {
-      await updateDoc(golferRef, { dailyHcp: newHcp });
-    } catch (error) {
-      console.error("Error updating daily handicap: ", error);
-    }
-  };
-
   const navigateHoles = (direction) => {
     setCurrentHoleNumber(prevNumber => {
       let newNumber = prevNumber;
@@ -345,14 +335,23 @@ const fetchAndUpdateRunningTotals = async () => {
       } else {
         newNumber = prevNumber > 1 ? prevNumber - 1 : 18;
       }
-
+  
+      // Find the hole ID based on the new hole number
       const holeId = Object.keys(holesDetailsMap).find(key => holesDetailsMap[key].holeNumber === newNumber);
-      formikRef.current.setFieldValue('score', scorecard.scores[holeId] || '0');
-
+  
+      // Set the score and stableford points for the new current hole
+      if (scorecard && scorecard.scores && scorecard.stablefordPoints) {
+        const newScore = scorecard.scores[holeId] || '0';
+        const newPoints = scorecard.stablefordPoints[holeId] || 0;
+  
+        formikRef.current.setFieldValue('score', newScore);
+        setStablefordPoints(newPoints); // Update the points state
+      }
+  
       return newNumber;
     });
   };
-
+  
   if (!scorecard || !holesDetailsMap[currentHoleNumber]) {
     return <div>Loading scorecard...</div>;
   }
@@ -383,105 +382,85 @@ const fetchAndUpdateRunningTotals = async () => {
         {({ values, handleSubmit, isSubmitting }) => (
           <form onSubmit={handleSubmit} className="space-y-4">
           {/* Golfer information */}
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-0">
+          <div className="flex flex-row justify-center items-center ml-auto mr-auto mb-1">
             <div className="mb-1 sm:mb-0">
-              <span className="text-sm mr-2">{golferDetails.golferName}</span>
-              <span className="text-sm mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
-              <span className="text-sm mr-1">Daily Hcp: {dailyHcp}</span>
+              <span className="flex-1/3 text-sm mr-2">{golferDetails.golferName}</span>
+              <span className="flex-1/3 text-sm mr-1">GA Hcp: {golferGaDetails.handicapGA}</span>
+              <span className="flex-1/3 text-sm mr-1">Daily Hcp: {dailyHcp}</span>
             </div>
           </div>
              {/* Hole information with responsive grid */}
-            <div className="grid grid-cols-4 sm:grid-cols-4 gap-1 text-center mb-0">
+             <div className="flex justify-center items-center space-x-4">
               <div>
-                <div className="font-semibold">{currentHoleDetails.holeNumber}</div>
-                <div className="text-sm">Hole</div>
+                <div className="flex-1/4 font-semibold text-center">{currentHoleDetails.holeNumber}</div>
+                <div className="flex-1/4 text-sm text-center">Hole</div>
               </div>
               <div>
-                <div className="font-semibold">{currentHoleDetails.holeLength} mtrs</div>
-                <div className="text-sm">Length</div>
+                <div className="flex-1/4 font-semibold text-center">{currentHoleDetails.holeLength} mtrs</div>
+                <div className="flex-1/4 text-sm text-center">Length</div>
               </div>
               <div>
-                <div className="font-semibold">{currentHoleDetails.holePar}</div>
-                <div className="text-sm">Par</div>
+                <div className="flex-1/4 font-semibold text-center">{currentHoleDetails.holePar}</div>
+                <div className="flex-1/4 text-sm text-center">Par</div>
               </div>
               <div>
-                <div className="font-semibold">{currentHoleDetails.holeIndex}</div>
-                <div className="text-sm">Index</div>
+                <div className="flex-1/4 font-semibold text-center">{currentHoleDetails.holeIndex}</div>
+                <div className="flex-1/4 text-sm text-center">Index</div>
               </div>
             </div>
 
             {/* Score and Total Score with responsive layout */}
-            <div className="flex flex-wrap justify-between items-center">
-              <div className="flex flex-col items-center flex-grow sm:flex-grow-0 mb-2 sm:mb-0">
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => decrementScore(values.score, currentHoleNumber)}
-                    className="bg-gray-300 hover:bg-gray-400 text-black py-1 px-4 rounded text-xl"
-                  >
-                    -
-                  </button>
-                  <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
-                  <input
-                    id="score"
-                    name="score"
-                    type="text"
-                    readOnly
-                    value={values.score}
-                    className="border rounded text-center text-xl w-12"
-                  />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => incrementScore(values.score, currentHoleNumber)}
-                    className="bg-gray-300 hover:bg-gray-400 text-black py-1 px-4 rounded text-xl"
-                  >
-                    +
-                  </button>
+            <div class=" mb-1">
+              <div className="flex justify-center items-center -mx-2 mt-1">
+                <div className="flex-1/3 items-center space-x-2 px-2">
+                    <button
+                      type="button"
+                      onClick={() => decrementScore(values.score, currentHoleNumber)}
+                      className="bg-red-300 hover:bg-red-400 text-black py-4 px-4 rounded text-4xl flex-1/3"
+                    >
+                      -
+                    </button>
                 </div>
-                <div className="text-m">Strokes</div>
+                <div className="flex-1/3 items-center px-2">
+                <div className="text-l text-center font-bold text-4xl">{values.score}</div>
+                      <div className="justify-center text-center text-sm">Strokes</div>
+                  </div>
+                  <div className="flex-1/3 items-center px-2">
+                    <button
+                      type="button"
+                      onClick={() => incrementScore(values.score, currentHoleNumber)}
+                      className="bg-green-300 hover:bg-green-400 text-black py-4 px-4 rounded text-4xl flex-1/3"
+                    >
+                      +
+                    </button>
+                  </div>
               </div>
-              <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
-                <input
-                  id="stableford"
-                  name="stableford"
-                  type="text"
-                  readOnly
-                  value={stablefordPoints}
-                  className="border rounded text-center text-xl w-12"
-                />
-                <div className="text-m">Points</div>
               </div>
-              <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
-                <input
-                  id="runningStablefordTotal"
-                  name="runningStablefordTotal"
-                  type="text"
-                  readOnly
-                  value={runningStablefordTotal}
-                  className="border rounded text-center text-xl w-12"
-                />
-                <div className="text-sm">Total Points</div>
+
+              <div className="flex justify-center items-center space-x-4">
+                <div className="px-2">
+                  <div className="text-l text-center font-bold">{stablefordPoints}</div>
+                  <div className="text-l text-center mt-1">Points</div>
+                </div>
+
+                <div className="px-2">
+                <div className="text-l text-center font-bold">{runningStablefordTotal}</div>
+                <div className="text-l text-center mt-1">Total Points</div>
+                </div>
+
+                <div className="px-2">
+                <div className="text-l text-center font-bold">{runningTotal}</div>
+                  <div className="text-l text-center mt-1">Total Strokes</div>
+                </div>
               </div>
-              <div className="flex flex-col items-center flex-grow sm:flex-grow-0">
-                <input
-                  id="totalscore"
-                  name="totalscore"
-                  type="text"
-                  readOnly
-                  value={runningTotal}
-                  className="border rounded text-center text-xl w-12"
-                />
-                <div className="text-sm">Total Strokes</div>
-              </div>
-            </div>
+          
 
             {/* Previous and Next buttons */}
-            <div className="flex  my-4">
+            <div className="flex justify-center my-4">
               <button
                 type="button"
                 onClick={() => navigateHoles('prev')}
-                className="bg-gray-500 hover:bg-gray-700 text-white py-1 px-3 rounded text-sm"
+                className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm"
               >
                 Previous
               </button>
@@ -490,7 +469,7 @@ const fetchAndUpdateRunningTotals = async () => {
               <button
                 type="button"
                 onClick={() => navigateHoles('next')}
-                className="bg-gray-500 hover:bg-gray-700 text-white py-1 px-3 rounded text-sm"
+                className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm"
               >
                 Next
               </button>
