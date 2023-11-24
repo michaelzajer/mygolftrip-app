@@ -88,36 +88,24 @@ export default function Profile() {
 
   return (
     <>
-      <section className="max-w-6xl mx-auto flex
-      justify-center items-center flex-col">
-        <h1 className="text-3xl text-center mt-6 
-        font-bold">My Profile</h1>
-        <div className="w-full md:w-[50%] mt-6 px-3">
+      <section className="max-w-6xl mx-auto flex justify-center items-center flex-col ">
+        <h1 className="text-3xl text-center mt-6 font-bold text-blue-600">My Profile</h1>
+        <div className="w-full md:w-[50%] mt-6 px-3 py-3 bg-blue-600 border border-green-300 rounded">
           <form>
             {/* Name input */}
-
             <input 
             type="text" 
             id="name"  
             value={name} 
             disabled={!changeDetail}
             onChange={onChange}
-            className={`mb-6 w-full px-4 py-2 text-m
-            text-gray-700 bg-white border border-gray-300
-            rounded transition ease-in-out"${changeDetail && 
-            "bg-red-200 focus:bg-red-200"}`} />
-
+            className={`mb-6 w-full px-4 py-2 text-m text-gray-700 bg-white border border-gray-300 rounded transition ease-in-out"${changeDetail && "bg-red-200 focus:bg-red-200"}`} />
             {/* Email input */}
-
             <input type="text" 
             id="email" 
             value={email} disabled
-            className="mb-6 w-full px-4 py-2 text-m
-            text-gray-700 bg-white border border-gray-300
-            rounded transition ease-in-out" />
-
+            className="mb-6 w-full px-4 py-2 text-m text-gray-700 bg-white border border-gray-300 rounded transition ease-in-out" />
             {/* GolfLink input */}
-
             <input 
               type="text" 
               id="golfLinkNo"  
@@ -125,14 +113,9 @@ export default function Profile() {
               disabled={!changeDetail}
               onChange={onChange}
               placeholder="GolfLinkNo"
-              className={`mb-6 w-full px-4 py-2 text-m 
-              text-gray-700 bg-white border border-gray-300
-              rounded transition ease-in-out"${changeDetail && 
-              "bg-red-200 focus:bg-red-200"}`} 
+              className={`mb-6 w-full px-4 py-2 text-m text-gray-700 bg-white border border-gray-300 rounded transition ease-in-out"${changeDetail && "bg-red-200 focus:bg-red-200"}`} 
             />
-
             {/* HandicapGA input */}
-
             <input 
               type="text" 
               id="handicapGA"  
@@ -140,53 +123,36 @@ export default function Profile() {
               disabled={!changeDetail}
               onChange={onChange}
               placeholder="GA handicap"
-              className={`mb-6 w-full px-4 py-2 text-m
-              text-gray-700 bg-white border border-gray-300
-              rounded transition ease-in-out"${changeDetail && 
-              "bg-red-200 focus:bg-red-200"}`} 
+              className={`mb-6 w-full px-4 py-2 text-m text-gray-700 bg-white border border-gray-300 rounded transition ease-in-out"${changeDetail && "bg-red-200 focus:bg-red-200"}`} 
             />
-
             <div 
-              className="flex justify-between 
-              whitespace-nowrap text-m sm:text-m mb-6">
-              <p className="flex items-center ">
-                Click to Update Details?
+              className="flex justify-between whitespace-nowrap text-m sm:text-m mb-6">
+              <p className="flex items-center text-white ">
                 <span
                 onClick={() => {
                   changeDetail && onSubmit()
                   setChangeDetail((prevState) => !prevState);
                 }}
-                className="text-green-100 
-                hover:text-green-300 transition ease-in-out
-                duration-200 ml-1 cursor-pointer"
-                >
-                  {changeDetail ? "Apply Change" : "Edit"}
+                className="text-green-300 hover:text-white transition ease-in-out duration-200 ml-1 cursor-pointer">
+                  {changeDetail ? "Apply Change" : "Edit Details"}
                   </span>
               </p>
               <p 
                 onClick={onLogout}
-                className="text-green-100 
-                hover:text-green-300 transition duration-200 ease-in-out
-                cursor-pointer text-m"
-                >
+                className="text-green-300 hover:text-white transition duration-200 ease-in-out cursor-pointer text-m">
                 Sign out
               </p>
             </div> 
             <button 
             type="submit" 
-              className="w-full bg-green-200
-              text-blue-200 uppercase px-7 py-3 text-m font-medium
-              rounded shadow-md hover:bg-blue-100 hover:text-white
-              transition duration-150 ease-in-out hover:shadow-lg
-              active:bg-blue-200 active:text-white">
+              className="w-full bg-green-300 text-blue-600 uppercase px-7 py-3 text-m font-medium rounded shadow-md hover:bg-blue-600 hover:text-white
+               transition duration-150 ease-in-out hover:shadow-lg active:bg-blue-600 active:text-white">
                 <Link to="/mytrips"
-                    className="flex justify-center items-center">
-                  <LiaGolfBallSolid className="mr-2 text-m bg-green-300
-                  rounded-full p-1 border-2"/>
-                  Click to Save your updated profile
+                    className="flex justify-center items-center ">
+                  <LiaGolfBallSolid className="mr-2 text-m bg-green-300 hover:bg-blue-600 rounded-full p-1 border-2 "/>
+                  Click to go to your Golf Trip
                 </Link>
             </button>
-            <p>{}</p>
           </form>
         </div>
       </section>

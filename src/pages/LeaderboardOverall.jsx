@@ -25,7 +25,7 @@ const LeaderboardOverall = () => {
             let golferData = {
               golferName: golferDoc.data().golferName,
               groupName: groupDoc.data().groupName,
-              groupDate: '', // Initialize with an empty string
+              groupDate: '-', // Initialize with an empty string
               totalPoints: 0,
               totalScore: 0,
               dailyHandicap: 0,
@@ -62,9 +62,9 @@ const LeaderboardOverall = () => {
   }, []);
 
   return (
-    <div className="container mx-auto max-w-6xl px-4">
+    <div className="container mx-auto max-w-6xl">
       <div className="mb-4 bg-white shadow overflow-hidden rounded-lg">
-        <div className="bg-blue-500 text-white flex flex-wrap justify-between md:text-sm sm:text-xs font-medium text-center p-2">
+        <div className="bg-blue-600 text-white flex flex-wrap justify-between text-sm font-medium text-center p-2">
           <div className="flex-1 text-center p-2 md:w-1/6">Date</div>
           <div className="flex-1 text-center p-2 md:w-1/4">Golfer Name</div>
           <div className="flex-1 text-center p-2 md:w-1/4">Group Name</div>
@@ -74,7 +74,7 @@ const LeaderboardOverall = () => {
           <div className="flex-1 text-center p-2 md:w-1/6">Total Strokes</div>
         </div>
         {golfers.map(golfer => (
-          <div key={golfer.golferId} className="flex flex-wrap items-center text-center border-b md:text-sm sm:text-xs">
+          <div key={golfer.golferId} className="flex flex-wrap items-center text-center border-b text-sm">
             <div className="flex-1 p-2 md:w-1/6">{golfer.groupDate}</div>
             <div className="flex-1 p-2 md:w-1/4">{golfer.golferName}</div>
             <div className="flex-1 p-2 md:w-1/4">{golfer.groupName}</div>

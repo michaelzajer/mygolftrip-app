@@ -151,11 +151,11 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
                   <div className="w-1/6 text-center p-2">{golfer.dailyHcp}</div>
                   <div className="w-1/6 text-center p-2">{golfer.score}</div>
                   <div className="w-1/6 text-center p-2">{golfer.stblFdPoints}</div>
-                  <div className="w-2/6 text-center p-2">
+                  <div className="w-2/6 text-center p-2 space-x-1">
                   {golfer.golferId === golferId && (
                     <button
                       onClick={() => handleOpenScoreCard(detail.tripId, detail.groupId, golfer.golferId)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs sm:px-1"
+                      className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-2 border border-green-300  rounded text-xs sm:px-1"
                     >
                       ScoreCard
                     </button>
@@ -163,7 +163,7 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
                      {golfer.golferId === golferId && (
                     <button
                       onClick={() => handleOpenViewRound(detail.tripId, detail.groupId, golfer.golferId)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs sm:px-1"
+                      className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-2 border border-green-300 rounded text-xs sm:px-1"
                     >
                       View Round
                     </button>

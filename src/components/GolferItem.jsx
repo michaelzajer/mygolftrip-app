@@ -31,7 +31,7 @@ const GolferItem = ({ golferRef }) => {
   }
 
   return (
-    <div className="bg-blue-500 text-white p-4 rounded-lg text-center">
+    <div className="bg-blue-600 text-white p-4 rounded-lg text-center">
       <h1 className="text-md font-bold text-center">{golfer.name}</h1>
       {/* Wrap the label in a span and apply text color */}
       <p className='text-md mt-2 text-center'>
@@ -42,7 +42,7 @@ const GolferItem = ({ golferRef }) => {
       </p>
       <Link to="/profile"
         className="text-white text-md mt-2
-        hover:text-green-200
+        hover:text-green-300
         transition duration-200
         ease-in-out
         ml-1">Update your profile</Link>

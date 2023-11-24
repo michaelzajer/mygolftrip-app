@@ -44,19 +44,20 @@ const GolferTripItem = (props) => {
   return (
     <>
       {trips.map(trip => (
-        <div key={trip.id} className="bg-green-400 text-white p-4 rounded-lg text-center pt-3">
-          <h1 className="text-md font-bold text-center text-blue-500">{trip.golfTripName}</h1>
+        <div key={trip.id} className="border border-green-300 bg-blue-200 text-white p-4 rounded-lg text-center pt-3">
+          <h1 className="text-md font-bold text-center text-blue-600">{trip.golfTripName}</h1>
           <p className='text-md mt-2 text-center text-white'>
-            <span className="text-blue-500">Start Date:</span> {trip.tripStartDate}
+            <span className="text-blue-600">Start Date:</span> {trip.tripStartDate}
           </p>
           <p className='text-md mt-2 text-center text-white'>
-            <span className="text-blue-500">End Date:</span> {trip.tripEndDate}
+            <span className="text-blue-600">End Date:</span> {trip.tripEndDate}
           </p>
-          <div className="flex justify-center space-x-2 mt-4">
-            {trip.dateRange.map(date => (
-              <button key={date} className="bg-blue-500 hover:bg-blue-700 text-white text-xs py-1 px-1 rounded"
+          <div className="flex justify-center space-x-1 mt-2">
+            {trip.dateRange.map((date, index) => (
+              <button key={date} className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white text-xs py-1 px-1 rounded border border-green-300 flex flex-col items-center"
               onClick={() => props.onDateSelect(date, trip.id)}>
-              {date}
+                <span className="font-semibold">{`Day ${index + 1}`}</span>
+                <span>{date}</span>
               </button>
             ))}
           </div>

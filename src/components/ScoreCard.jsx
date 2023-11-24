@@ -242,6 +242,7 @@ const fetchAndUpdateRunningTotals = async () => {
           groupName: groupName,
           groupDate: groupDate,
           golferId: dGolferId,
+          golferName: golferDetails.golferName,
         };
   
         try {
@@ -255,6 +256,7 @@ const fetchAndUpdateRunningTotals = async () => {
             totalPoints: newTotalPoints,
             groupName: groupName,
             groupDate: groupDate,
+            golferName: golferDetails.golferName,
           }));
   
           const leaderboardRef = doc(db, 'golfTrips', golfTripId, 'groups', dGroupId, 'leaderboard', dGolferId);
@@ -266,6 +268,7 @@ const fetchAndUpdateRunningTotals = async () => {
             groupName: groupName,
             groupDate: groupDate,
             golferId: dGolferId,
+            golferName: golferDetails.golferName,
           };
           await setDoc(leaderboardRef, leaderboardUpdate, { merge: true });
   
@@ -452,7 +455,7 @@ const fetchAndUpdateRunningTotals = async () => {
               <button
                 type="button"
                 onClick={() => navigateHoles('prev')}
-                className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-2xl"
+                className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-3 rounded text-2xl"
               >
                 Previous
               </button>
@@ -461,7 +464,7 @@ const fetchAndUpdateRunningTotals = async () => {
               <button
                 type="button"
                 onClick={() => navigateHoles('next')}
-                className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-2xl"
+                className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-3 rounded text-2xl"
               >
                 Next
               </button>
@@ -472,7 +475,7 @@ const fetchAndUpdateRunningTotals = async () => {
                 <button
                   type="button"
                   onClick={completeRound}
-                  className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm mt-4"
+                  className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-3 rounded text-2xl mt-4"
                 >
                   Complete Round
                 </button>
