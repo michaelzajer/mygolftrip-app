@@ -76,14 +76,14 @@ const LeaderboardDate = () => {
   return (
     <div className="container mx-auto max-w-6xl">
       {Object.entries(datesWithGolfers)?.sort().map(([date, golfers]) => (
-        <div key={date} className="mb-1 bg-white shadow overflow-hidden rounded-lg">
-          <h2 className="text-sm font-semibold px-2">{date}</h2>
+        <div key={date} className="mb-1 bg-bground-100 shadow overflow-hidden rounded-lg">
+          <h2 className="text-sm font-semibold px-2 text-pink-100">{date}</h2>
           <div className="grid grid-cols-12 text-xs sm:text-sm">
-            <div className="col-span-2 bg-blue-600 text-white py-1 px-4">Golfer Name</div>
-            <div className="col-span-2 bg-blue-600 text-white py-1 px-4">GA Hcp</div>
-            <div className="col-span-2 bg-blue-600 text-white py-1 px-4">Daily Hcp</div>
-            <div className="col-span-2 bg-blue-600 text-white py-1 px-4">Points</div>
-            <div className="col-span-2 bg-blue-600 text-white py-1 px-4">Score</div>
+            <div className="col-span-2 bg-blue-100 text-yellow-100 py-1 px-4">Golfer Name</div>
+            <div className="col-span-2 bg-blue-100 text-yellow-100 py-1 px-4">GA Hcp</div>
+            <div className="col-span-2 bg-blue-100 text-yellow-100 py-1 px-4">Daily Hcp</div>
+            <div className="col-span-2 bg-blue-100 text-yellow-100 py-1 px-4">Points</div>
+            <div className="col-span-2 bg-blue-100 text-yellow-100 py-1 px-4">Score</div>
           </div>
           {golfers.map(golfer => (
             <div key={golfer.golferId} className="grid grid-cols-12 gap-4 bg-white text-xs sm:text-sm">

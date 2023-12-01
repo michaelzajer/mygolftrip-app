@@ -44,17 +44,17 @@ const GolferTripItem = (props) => {
   return (
     <>
       {trips.map(trip => (
-        <div key={trip.id} className="border border-green-300 bg-blue-200 text-white p-4 rounded-lg text-center pt-3">
-          <h1 className="text-md font-bold text-center text-blue-600">{trip.golfTripName}</h1>
-          <p className='text-md mt-2 text-center text-white'>
-            <span className="text-blue-600">Start Date:</span> {trip.tripStartDate}
+        <div key={trip.id} className="border border-blue-100 bg-bground-100 p-4 rounded-lg text-center pt-3">
+          <h1 className="text-md font-bold text-center text-blue-100">{trip.golfTripName}</h1>
+          <p className='text-md mt-2 text-center text-pink-100'>
+            <span className="text-blue-100">Start Date:</span> {trip.tripStartDate}
           </p>
-          <p className='text-md mt-2 text-center text-white'>
-            <span className="text-blue-600">End Date:</span> {trip.tripEndDate}
+          <p className='text-md mt-2 text-center text-pink-100'>
+            <span className="text-blue-100">End Date:</span> {trip.tripEndDate}
           </p>
           <div className="flex justify-center space-x-1 mt-2">
             {trip.dateRange.map((date, index) => (
-              <button key={date} className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white text-xs py-1 px-1 rounded border border-green-300 flex flex-col items-center"
+              <button key={date} className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white text-xs py-1 px-1 rounded border border-pink-100 flex flex-col items-center"
               onClick={() => props.onDateSelect(date, trip.id)}>
                 <span className="font-semibold">{`Day ${index + 1}`}</span>
                 <span>{date}</span>

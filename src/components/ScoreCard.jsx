@@ -25,6 +25,11 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   const formikRef = useRef();
   const auth = getAuth();
   const golferId = auth.currentUser?.uid;
+  const [isUpdated, setIsUpdated] = useState({
+    totalPoints: false,
+    totalStrokes: false,
+    totalSPoints: false,
+  });
 
   useEffect(() => {
     if (scorecard && scorecard.scores) {
@@ -275,8 +280,16 @@ const fetchAndUpdateRunningTotals = async () => {
         } catch (error) {
           console.error(`Error saving score for hole ${holeNumber}: `, error);
         }
-      }
-    }
+          // Update the state to indicate the update
+            setIsUpdated({ totalPoints: true, totalStrokes: true, totalSPoints: true });
+
+          // Optional: Reset the state after a delay (e.g., 2 seconds)
+          setTimeout(() => {
+            setIsUpdated({ totalPoints: false, totalStrokes: false, totalSPoints: false });
+          }, 1000);
+              
+            }
+          }
   };
   
   const completeRound = () => {
@@ -355,11 +368,11 @@ const fetchAndUpdateRunningTotals = async () => {
   const currentHoleId = currentHoleDetails.id;
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-4">
-      <div className="bg-blue-500 text-white py-2 rounded-t-lg flex justify-between items-center">
+    <div className="bg-blue-100 text-green-100 shadow-lg rounded-lg p-4">
+      <div className="bg-blue-100 text-yellow-100 py-2 rounded-t-lg flex justify-between items-center">
         <h3 className="text-m font-semibold ml-4">Scorecard - {courseName} - {teeName}</h3>
         <div className="flex items-center">
-          <button onClick={onClose} className="bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded text-sm">
+          <button onClick={onClose} className="bg-pink-100 hover:bg-pink-100 text-white py-1 px-3 rounded text-sm">
             Close
           </button>
         </div>
@@ -373,6 +386,7 @@ const fetchAndUpdateRunningTotals = async () => {
           await saveScore(values.score);
           setSubmitting(false);
         }}
+        className="border border-w2"
       >
         {({ values, handleSubmit, isSubmitting }) => (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -405,26 +419,26 @@ const fetchAndUpdateRunningTotals = async () => {
             </div>
 
             {/* Score and Total Score with responsive layout */}
-            <div class=" mb-1">
+            <div class=" mb-1 rounded">
               <div className="flex justify-center items-center -mx-2 mt-1">
-                <div className="flex-1/3 items-center space-x-2 px-2">
+                <div className="flex-1/3 items-center space-x-2 px-2 py-2 bg-bground-100">
                     <button
                       type="button"
                       onClick={() => decrementScore(values.score, currentHoleNumber)}
-                      className="bg-red-300 hover:bg-red-400 text-black py-4 px-4 rounded text-5xl flex-1/3"
+                      className="bg-blue-100 hover:text-blue-100 hover:bg-pink-100 text-pink-100 py-4 px-4 rounded text-5xl flex-1/3"
                     >
                       -
                     </button>
                 </div>
-                <div className="flex-1/3 items-center px-2">
-                <div className="text-l text-center font-bold text-5xl">{values.score}</div>
-                      <div className="justify-center text-center text-2xl">Strokes</div>
+                <div className="flex-1/3 items-center px-2 py-2 bg-bground-100">
+                <div className="text-l text-center font-bold text-5xl text-blue-100">{values.score}</div>
+                      <div className="justify-center text-center text-2xl text-blue-100">Strokes</div>
                   </div>
-                  <div className="flex-1/3 items-center px-2">
+                  <div className="flex-1/3 items-center px-2 py-2 bg-bground-100">
                     <button
                       type="button"
                       onClick={() => incrementScore(values.score, currentHoleNumber)}
-                      className="bg-green-300 hover:bg-green-400 text-black py-4 px-4 rounded text-5xl flex-1/3"
+                      className="bg-blue-100 hover:text-blue-100 hover:bg-green-100 text-green-100 py-4 px-4 rounded text-5xl flex-1/3"
                     >
                       +
                     </button>
@@ -434,17 +448,17 @@ const fetchAndUpdateRunningTotals = async () => {
 
               <div className="flex justify-center items-center space-x-4">
                 <div className="px-2">
-                  <div className="text-l text-center font-bold text-2xl">{stablefordPoints}</div>
+                  <div className={`text-l text-center font-bold text-2xl ${isUpdated.totalStrokes ? 'text-yellow-100' : 'text-green-100'}`}>{stablefordPoints}</div>
                   <div className="text-l text-center mt-1 text-1xl">Points</div>
                 </div>
 
                 <div className="px-2">
-                <div className="text-l text-center font-bold text-2xl">{runningStablefordTotal}</div>
+                <div className={`text-l text-center font-bold text-2xl ${isUpdated.totalPoints ? 'text-yellow-100' : 'text-green-100'}`}>{runningStablefordTotal}</div>
                 <div className="text-l text-center mt-1 text-1xl">Total Points</div>
                 </div>
 
                 <div className="px-2">
-                <div className="text-l text-center font-bold text-2xl">{runningTotal}</div>
+                <div className={`text-l text-center font-bold text-2xl ${isUpdated.totalStrokes ? 'text-yellow-100' : 'text-green-100'}`}>{runningTotal}</div>
                   <div className="text-l text-center mt-1 text-1xl">Total Strokes</div>
                 </div>
               </div>
@@ -455,7 +469,7 @@ const fetchAndUpdateRunningTotals = async () => {
               <button
                 type="button"
                 onClick={() => navigateHoles('prev')}
-                className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-3 rounded text-2xl"
+                className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 border border-yellow-100 text-pink-100 py-1 px-3 rounded text-2xl"
               >
                 Previous
               </button>
@@ -464,7 +478,7 @@ const fetchAndUpdateRunningTotals = async () => {
               <button
                 type="button"
                 onClick={() => navigateHoles('next')}
-                className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-3 rounded text-2xl"
+                className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 border border-yellow-100 text-pink-100 py-1 px-3 rounded text-2xl"
               >
                 Next
               </button>
@@ -475,7 +489,7 @@ const fetchAndUpdateRunningTotals = async () => {
                 <button
                   type="button"
                   onClick={completeRound}
-                  className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-3 rounded text-2xl mt-4"
+                  className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 border border-yellow-100 text-pink-100 py-1 px-3 rounded text-2xl mt-4"
                 >
                   Complete Round
                 </button>

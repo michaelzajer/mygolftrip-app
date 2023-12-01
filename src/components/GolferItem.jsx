@@ -31,18 +31,18 @@ const GolferItem = ({ golferRef }) => {
   }
 
   return (
-    <div className="bg-blue-600 text-white p-4 rounded-lg text-center">
+    <div className="bg-blue-100 text-yellow-100 p-4 rounded-lg text-center">
       <h1 className="text-md font-bold text-center">{golfer.name}</h1>
       {/* Wrap the label in a span and apply text color */}
       <p className='text-md mt-2 text-center'>
-        <span className="text-green-300">Golf Link No:</span> {golfer.golfLinkNo}
+        <span className="text-green-100">Golf Link No:</span> {golfer.golfLinkNo}
       </p>
       <p className='text-md mt-2 text-center'>
-        <span className="text-green-300">GA Handicap:</span> {golfer.handicapGA}
+        <span className="text-green-100">GA Handicap:</span> {golfer.handicapGA}
       </p>
       <Link to="/profile"
-        className="text-white text-md mt-2
-        hover:text-green-300
+        className="text-pink-100 text-md mt-2
+        hover:text-yellow-100
         transition duration-200
         ease-in-out
         ml-1">Update your profile</Link>

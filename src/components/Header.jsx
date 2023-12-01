@@ -28,13 +28,13 @@ export default function Header() {
         }
     }
   return (
-    <div className='bg-white border-b shadow-sm sticky top-o z-40'>
+    <div className='bg-bground-100 border-b shadow-sm sticky top-o z-40'>
         <header className='flex justify-between items-center
         px-3 max-w-6xl mx-auto'>
             <div>
-                <img src="https://golf-trip-v1-storage-7ccb4a8094550-staging.s3.amazonaws.com/public/mygolftrip_logo.png"
+                <img src="/mygolftrip_logo2.svg"
                 alt="logo"
-                className="h-8 cursor-pointer"
+                className="h-8 cursor-pointer bg-blue-100"
                 onClick={()=>navigate("/")}  />
             </div>
             <div>
@@ -42,26 +42,26 @@ export default function Header() {
                     <li className={`cursor-pointer py-3 text-sm font-semibold
                         text-grey-400 border-b-[3px]
                         border-b-transparent
-                        ${pathMatchRoute("/") && "text-black border-b-green-300"}`}
+                        ${pathMatchRoute("/") && "text-blue-100 border-b-green-100"}`}
                         onClick={()=>navigate("/")} 
                         >Home</li>
                     <li className={`cursor-pointer py-3 text-sm font-semibold
                         text-grey-400 border-b-[3px]
                         border-b-transparent
-                        ${pathMatchRoute("/mytrips") && "text-black border-b-green-300"}`}
+                        ${pathMatchRoute("/mytrips") && "text-blue-100 border-b-green-100"}`}
                         onClick={()=>navigate("/mytrips")} 
                         >MyTrips</li>
                     <li className={`cursor-pointer py-3 text-sm font-semibold
                         text-grey-400 border-b-[3px]
                         border-b-transparent
-                        ${pathMatchRoute("/leaderboard") && "text-black border-b-green-300"}`}
+                        ${pathMatchRoute("/leaderboard") && "text-blue-100 border-b-green-100"}`}
                         onClick={()=>navigate("/leaderboard")} 
                         >Leaderboard</li>
                     {isAdmin && ( // This will only render if isAdmin is true
                         <li className={`cursor-pointer py-3 text-sm font-semibold
                             text-grey-400 border-b-[3px]
                             border-b-transparent
-                            ${pathMatchRoute("/admin") && "text-black border-b-green-300"}`}
+                            ${pathMatchRoute("/admin") && "text-blue-100 border-b-green-100"}`}
                             onClick={()=>navigate("/admin")} 
                             >Admin</li>
                     )}

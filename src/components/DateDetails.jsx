@@ -129,8 +129,8 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
       {dateDetails.length > 0 ? (
         dateDetails.map((detail, index) => (
           <div key={index} className="mb-4">
-            <div className="mt-4 bg-white shadow-lg rounded-lg">
-              <div className="flex flex-wrap items-center justify-between bg-blue-500 text-white py-2 px-4 rounded-t-lg">
+            <div className="mt-4 bg-bground-100 shadow-lg rounded-lg">
+              <div className="flex flex-wrap items-center justify-between bg-blue-100 text-yellow-100 py-2 px-4 rounded-t-lg">
                 <h3 className="text-sm sm:text-m lg:text-m font-semibold">{detail.groupDate}</h3>
                 <h3 className="text-sm sm:text-m lg:text-m font-semibold">{detail.groupName}</h3>
               </div>
@@ -155,7 +155,7 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
                   {golfer.golferId === golferId && (
                     <button
                       onClick={() => handleOpenScoreCard(detail.tripId, detail.groupId, golfer.golferId)}
-                      className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-2 border border-green-300  rounded text-xs sm:px-1"
+                      className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white py-1 px-2 rounded text-xs sm:px-1"
                     >
                       ScoreCard
                     </button>
@@ -163,7 +163,7 @@ const DateDetails = ({ selectedDate, onHideLeftComponent, onShowLeftComponent })
                      {golfer.golferId === golferId && (
                     <button
                       onClick={() => handleOpenViewRound(detail.tripId, detail.groupId, golfer.golferId)}
-                      className="bg-blue-600 hover:bg-green-300 hover:text-blue-600 text-white py-1 px-2 border border-green-300 rounded text-xs sm:px-1"
+                      className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white py-1 px-2 rounded text-xs sm:px-1"
                     >
                       View Round
                     </button>

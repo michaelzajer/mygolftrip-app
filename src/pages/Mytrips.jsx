@@ -70,7 +70,7 @@ const MyTrips = () => {
   };
   
     return (
-      <div className="flex justify-center px-6 py-12">
+      <div className="flex justify-center px-6 py-12 bg-bground-100">
         <div className="max-w-7xl w-full mx-auto">
           <div className="flex flex-col md:flex-row md:items-start gap-8">
             {/* Left Components - Conditionally render the left component based on left component state */}

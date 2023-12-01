@@ -7,19 +7,25 @@ module.exports = {
     extend: {
       colors: {
         green: {
-          '100': '#68f64a',
-          '200': '#d7f87b',
-          '300': '#b7ec2f',
-          '400': '#99d210',
-          '500': '#76a808',
+          '100': '#06d6a0',
+        },
+        pink: {
+          '100': '#ef476f',
         },
         blue: {
-          '100': '#85c5f4',
-          '200': '#4aabed',
-          '300': '#1b8ddc',
-          '400': '#0e6fbb',
-          '500': '#0d5997',
+          '100': '#26547c',
         },
+        yellow: {
+          '100': '#ffd166',
+        },
+        bground: {
+          '100': '#f6fbfa',
+        },
+        /*
+        Consistency: Use your primary color for main elements like headers and buttons.
+        Highlighting: Use accent colors for calls to action, links, or to highlight important information.
+        Readability: Ensure good contrast, especially with text. Use background colors that are easy on the eyes.
+        */
     },
   },
 },

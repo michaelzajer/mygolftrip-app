@@ -77,18 +77,18 @@ const LeaderBoardGroups = () => {
           {trip.groups.map(group => (
             <div key={group.id} className="mt-4">
               <div className="mb-1">
-                <span className="flex text-blue-600 text-xs sm:text-sm justify-between text-center">{group.groupDate.toLocaleDateString()} - {group.groupName}</span>
+                <span className="flex text-pink-100 text-xs sm:text-sm justify-between text-center">{group.groupDate.toLocaleDateString()} - {group.groupName}</span>
               </div>
               <div className="grid grid-cols-12 gap-4 text-xs sm:text-sm">
-                <div className="col-span-2 rounded bg-blue-600 text-white py-1 px-4">Golfer Name</div>
-                <div className="col-span-2 rounded bg-blue-600 text-white py-1 px-4">Group Name</div>
-                <div className="col-span-2 rounded bg-blue-600 text-white py-1 px-4">GA Handicap</div>
-                <div className="col-span-2 rounded bg-blue-600 text-white py-1 px-4">Daily Handicap</div>
-                <div className="col-span-2 rounded bg-blue-600 text-white py-1 px-4">Points</div>
-                <div className="col-span-2 rounded bg-blue-600 text-white py-1 px-4">Score</div>
+                <div className="col-span-2 rounded bg-blue-100 text-yellow-100 py-1 px-4">Golfer Name</div>
+                <div className="col-span-2 rounded bg-blue-100 text-yellow-100 py-1 px-4">Group Name</div>
+                <div className="col-span-2 rounded bg-blue-100 text-yellow-100 py-1 px-4">GA Handicap</div>
+                <div className="col-span-2 rounded bg-blue-100 text-yellow-100 py-1 px-4">Daily Handicap</div>
+                <div className="col-span-2 rounded bg-blue-100 text-yellow-100 py-1 px-4">Points</div>
+                <div className="col-span-2 rounded bg-blue-100 text-yellow-100 py-1 px-4">Score</div>
               </div>
               {group.golfers.map(golfer => (
-                <div key={golfer.golferId} className="grid grid-cols-12 gap-4 bg-white text-xs sm:text-sm">
+                <div key={golfer.golferId} className="grid grid-cols-12 gap-4 bg-bground-100 text-xs sm:text-sm">
                   <div className="col-span-2 py-1 px-4">{golfer.golferName}</div>
                   <div className="col-span-2 py-1 px-4">{group.groupName}</div>
                   <div className="col-span-2 py-1 px-4">{golfer.gaHandicap}</div>

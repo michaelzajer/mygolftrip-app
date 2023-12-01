@@ -101,7 +101,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
           <button
             type="button"
             onClick={() => handleScoreUpdate(holeNumber, Number(inputScore))}
-            className="bg-green-500 hover:bg-green-700 text-white py-1 px-2 rounded text-xs"
+            className="bg-green-100 hover:bg-green-200 text-white py-1 px-2 rounded text-xs"
           >
             Update
           </button>
@@ -121,8 +121,8 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   };
   
   return (
-    <div className="bg-white shadow-lg rounded-lg">
-      <div className="bg-blue-500 text-white text-center py-2 rounded-t-lg">
+    <div className="bg-bground-100 shadow-lg rounded-lg">
+      <div className="bg-blue-100 text-yellow-100 text-center py-2 rounded-t-lg">
         <h3 className="text-xl font-semibold">View Round</h3>
       </div>
       <div className="p-4">
@@ -175,7 +175,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
                       <button
                         type="button"
                         onClick={() => handleScoreUpdate(holeDetail.holeNumber, Number(inputScore))}
-                        className="bg-green-500 hover:bg-green-700 text-white py-1 px-2 rounded text-sm sm:text-sm lg:text-m sm:px-3"
+                        className="bg-green-100 hover:bg-green-100 text-blue-100 hover:text-pink-100 py-1 px-2 rounded text-sm sm:text-sm lg:text-m sm:px-3"
                         >
                         Update
                       </button>
@@ -193,7 +193,7 @@ const ViewRound = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
                   ) : (
                     <button 
                       onClick={() => setEditHole(holeDetail.holeNumber)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded text-sm sm:text-sm lg:text-m"
+                      className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white py-1 px-2 rounded text-sm sm:text-sm lg:text-m"
                     >
                       Edit Strokes
                     </button>

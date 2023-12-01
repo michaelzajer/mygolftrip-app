@@ -64,7 +64,7 @@ const LeaderboardOverall = () => {
   return (
     <div className="container mx-auto max-w-6xl">
       <div className="mb-4 bg-white shadow overflow-hidden rounded-lg">
-        <div className="bg-blue-600 text-white flex flex-wrap justify-between text-sm font-medium text-center p-2">
+        <div className="bg-blue-100 text-yellow-100 flex flex-wrap justify-between text-sm font-medium text-center p-2">
           <div className="flex-1 text-center p-2 md:w-1/6">Date</div>
           <div className="flex-1 text-center p-2 md:w-1/4">Golfer Name</div>
           <div className="flex-1 text-center p-2 md:w-1/4">Group Name</div>
