@@ -16,7 +16,7 @@ export default function Home() {
 
       <div className="text-center mt-8">
         <h1 className="text-3xl font-bold mb-2">Craft Your Ultimate Golf Trip Experience!</h1>
-        <p className="mb-4">Your One-Stop Digital Solution for Personalized Golf Trip Competitions.</p>
+        <p className="mb-4">Your One-Stop Solution for Personalized Golf Trip Competitions.</p>
         <ul className="text-left list-disc list-inside mb-4">
           <li>Golfer Admin Setup</li>
           <li>Add Friends</li>
