@@ -86,41 +86,73 @@ const AdminDailyHcp = () => {
   };
 
   return (
-    <div>
-      <h2>Upload Daily Hcp Conversions</h2>
-      <div>
-        <label>Golf Trip:</label>
-        <select onChange={e => setSelectedGolfTripId(e.target.value)} value={selectedGolfTripId}>
-          <option value="">Select a trip</option>
-          {golfTrips.map(trip => (
-            <option key={trip.id} value={trip.id}>{trip.golfTripName}</option>
-          ))}
-        </select>
+    <div className="p-6 bg-background-100 min-h-screen">
+      <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow">
+        <h2 className="text-2xl font-bold mb-6 text-blue-500">Upload Daily Hcp Conversions</h2>
+  
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">Golf Trip:</label>
+          <select
+            onChange={e => setSelectedGolfTripId(e.target.value)}
+            value={selectedGolfTripId}
+            className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option value="">Select a trip</option>
+            {golfTrips.map(trip => (
+              <option key={trip.id} value={trip.id}>{trip.golfTripName}</option>
+            ))}
+          </select>
+        </div>
+  
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">Course:</label>
+          <select
+            onChange={e => setSelectedCourseId(e.target.value)}
+            value={selectedCourseId}
+            className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option value="">Select a course</option>
+            {courses.map(course => (
+              <option key={course.id} value={course.id}>{course.courseName}</option>
+            ))}
+          </select>
+        </div>
+  
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">Tees:</label>
+          <select
+            onChange={e => setSelectedTeeId(e.target.value)}
+            value={selectedTeeId}
+            className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option value="">Select tees</option>
+            {tees.map(tee => (
+              <option key={tee.id} value={tee.id}>{tee.teeName}</option>
+            ))}
+          </select>
+        </div>
+        <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">Upload CSV File:</label>
+        <input 
+          type="file" 
+          onChange={handleFileChange} 
+          accept=".csv" 
+          className="shadow border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        />
       </div>
-      <div>
-        <label>Course:</label>
-        <select onChange={e => setSelectedCourseId(e.target.value)} value={selectedCourseId}>
-          <option value="">Select a course</option>
-          {courses.map(course => (
-            <option key={course.id} value={course.id}>{course.courseName}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label>Tees:</label>
-        <select onChange={e => setSelectedTeeId(e.target.value)} value={selectedTeeId}>
-          <option value="">Select tees</option>
-          {tees.map(tee => (
-            <option key={tee.id} value={tee.id}>{tee.teeName}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <input type="file" onChange={handleFileChange} accept=".csv" />
-        <button onClick={handleFileUpload} disabled={!file}>Upload</button>
+
+      <div className="flex justify-center">
+        <button 
+          onClick={handleFileUpload} 
+          disabled={!file}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+        >
+          Upload
+        </button>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default AdminDailyHcp;

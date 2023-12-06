@@ -1,124 +1,135 @@
-
-import React from 'react';
-import { Formik, Form, Field } from 'formik';
+import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, doc, setDoc, addDoc, getDocs } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const CreateTeeBlock = ({ teeId }) => {
+const CreateTeeBlock = () => {
     const [golfTrips, setGolfTrips] = useState([]);
     const [courses, setCourses] = useState([]);
     const [selectedGolfTripId, setSelectedGolfTripId] = useState('');
     const [selectedCourseId, setSelectedCourseId] = useState('');
+    const [teeName, setTeeName] = useState('');
+    const [scratchRating, setScratchRating] = useState('');
+    const [slopeRating, setSlopeRating] = useState('');
 
     useEffect(() => {
         const fetchGolfTrips = async () => {
-          const querySnapshot = await getDocs(collection(db, 'golfTrips'));
-          const trips = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setGolfTrips(trips);
+            const querySnapshot = await getDocs(collection(db, 'golfTrips'));
+            const trips = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setGolfTrips(trips);
         };
-      
         fetchGolfTrips();
-      }, []);
+    }, []);
 
-      useEffect(() => {
+    useEffect(() => {
         const fetchCourses = async () => {
-          if (selectedGolfTripId) {
-            const coursesSnapshot = await getDocs(collection(db, 'golfTrips', selectedGolfTripId, 'courses'));
-            setCourses(coursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-          }
+            if (selectedGolfTripId) {
+                const coursesSnapshot = await getDocs(collection(db, 'golfTrips', selectedGolfTripId, 'courses'));
+                setCourses(coursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            } else {
+                setCourses([]);
+            }
         };
-    
         fetchCourses();
-      }, [selectedGolfTripId]);
+    }, [selectedGolfTripId]);
 
-      const handleGolfTripChange = (event) => {
-        const tripId = event.target.value;
-        setSelectedGolfTripId(tripId);
-        setSelectedCourseId(''); // Reset the selected course ID when the trip changes
-      };
-    
-      const handleCourseChange = (event) => {
-        setSelectedCourseId(event.target.value);
-      };
+    const handleSubmit = async () => {
+        try {
+            const teeRef = collection(db, 'golfTrips', selectedGolfTripId, 'courses', selectedCourseId, 'tees');
+            await addDoc(teeRef, {
+                teeName,
+                scratchRating,
+                slopeRating,
+            });
+            alert('Tee block created successfully!');
+        } catch (error) {
+            console.error("Error adding tee block: ", error);
+        }
+    };
 
-      const initialValues = {
-        teeName: '',
-        scratchRating: '',
-        slopeRating: '',
-      };
+    return (
+        <div className="p-6 bg-bground-100 min-h-screen">
+            <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow">
+                <h2 className="text-2xl font-bold mb-6 text-blue-100">Create Tee Block</h2>
+                {/* Golf Trip Selection */}
+                <div className="mb-4">
+                    <select
+                        className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                        value={selectedGolfTripId}
+                        onChange={(e) => setSelectedGolfTripId(e.target.value)}
+                    >
+                        <option value="">Select a Golf Trip</option>
+                        {golfTrips.map(trip => (
+                            <option key={trip.id} value={trip.id}>{trip.golfTripName}</option>
+                        ))}
+                    </select>
+                </div>
 
-    const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-    try {
-      let teeRef;
-      if (teeId) {
-        // If courseId is provided, get a reference to the existing document
-        teeRef = doc(db, 'golfTrips', selectedGolfTripId, 'courses', selectedCourseId, 'tees', teeId);
-        await setDoc(teeRef, values);
-      } else {
-        // If no courseId, create a new document in courses collection
-        teeRef = collection(db, 'golfTrips', selectedGolfTripId, 'courses', selectedCourseId, 'tees');
-        await addDoc(teeRef, values);
-      }
-      // Reset the form after successful submission
-      resetForm();
-    } catch (error) {
-      console.error("Error adding/updating hole: ", error);
-    }
-    setSubmitting(false); // Set submitting to false at the end of the function
-  };
-  
-  return (
-    <div>
-      <h3>Create Tee</h3>
-      <Formik initialValues={initialValues} onSubmit={handleSubmit}>
-        {({ isSubmitting }) => (
-          <Form>
-            <label htmlFor="golfTripSelect">Select Golf Trip:</label>
-            <Field as="select" id="golfTripSelect" name="golfTrip" onChange={handleGolfTripChange}>
-              <option value="">Select a trip</option>
-              {golfTrips.map(trip => (
-                <option key={trip.id} value={trip.id}>{trip.golfTripName}</option>
-              ))}
-            </Field>
+                {/* Course Selection */}
+                {selectedGolfTripId && (
+                    <div className="mb-4">
+                        <select
+                            className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                            value={selectedCourseId}
+                            onChange={(e) => setSelectedCourseId(e.target.value)}
+                        >
+                            <option value="">Select a Course</option>
+                            {courses.map(course => (
+                                <option key={course.id} value={course.id}>{course.courseName}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
-            {selectedGolfTripId && (
-              <>
-                <label htmlFor="courseSelect">Select Course:</label>
-                <Field as="select" id="courseSelect" name="course" onChange={handleCourseChange}>
-                  <option value="">Select a course</option>
-                  {courses.map(course => (
-                    <option key={course.id} value={course.id}>{course.courseName}</option>
-                  ))}
-                </Field>
-              </>
-            )}
+                {/* Tee Block Details */}
+                <div className="grid grid-cols-1 gap-4 mb-4">
+                    <input
+                        className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                        type="text"
+                        placeholder="Tee Name"
+                        value={teeName}
+                        onChange={(e) => setTeeName(e.target.value)}
+                    />
+                    <input
+                        className="shadow border rounded w-full py-2 px-3 text-grey-700
+                        leading-tight"
+                        type="text"
+                        placeholder="Scratch Rating"
+                        value={scratchRating}
+                        onChange={(e) => setScratchRating(e.target.value)}
+                    />
+                    <input
+                        className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                        type="text"
+                        placeholder="Slope Rating"
+                        value={slopeRating}
+                        onChange={(e) => setSlopeRating(e.target.value)}
+                    />
+                </div>
 
-            <label htmlFor="teeName">Tee Name</label>
-            <Field id="teeName" name="teeName" placeholder="Tee Name" />
-            
-            <label htmlFor="scratchRating">Scratch Rating</label>
-            <Field id="scratchRating" name="scratchRating" placeholder="Scratch Rating" />
-            
-            <label htmlFor="slopeRating">Slope Rating</label>
-            <Field id="slopeRating" name="slopeRating" placeholder="Slope Rating" />
-            
-            <button type="submit" disabled={isSubmitting}>
-              {teeId ? 'Update Tee' : 'Save Tee'}
-            </button>
-          </Form>
-        )}
-      </Formik>
+                {/* Submit Button */}
+                <button
+                    className="bg-blue-100 text-white py-2 px-4 rounded hover:bg-blue-300 focus:outline-none focus:shadow-outline"
+                    onClick={handleSubmit}
+                >
+                    Create Tee Block
+                </button>
 
-      <Link to="/admin/createhole" className="text-green-300 hover:text-blue-200 transition duration-200 ease-in-out ml-1">
-        Create Hole
-      </Link>
-    </div>
-  );
+                {/* Navigation Link */}
+                <div className="mt-4">
+                    <Link
+                        to="/admin/createhole"
+                        className="text-blue-100 hover:text-blue-300 transition duration-200 ease-in-out"
+                    >
+                        Go to Create Hole
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default CreateTeeBlock;

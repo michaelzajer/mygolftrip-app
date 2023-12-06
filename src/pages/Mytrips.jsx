@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, orderBy } from 'firebase/firestore';
+import { collection, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from "firebase/auth";
 import GolferItem from "../components/GolferItem";
 import GolferTripItem from "../components/GolferTripItem";
@@ -18,39 +18,37 @@ const MyTrips = () => {
   useEffect(() => {
     const fetchMyTrips = async () => {
       if (!golferId) return;
-
-      let tripsData = [];
+  
+      const myTripsData = [];
       const tripsSnapshot = await getDocs(collection(db, "golfTrips"));
-      
+  
       for (const tripDoc of tripsSnapshot.docs) {
-        const groupsSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups`));
-        
-        for (const groupDoc of groupsSnapshot.docs) {
-          const golfersSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/golfers`), orderBy('score', 'desc'));
-          const golfers = golfersSnapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
-
-          const isGolferInGroup = golfers.some(golfer => golfer.golferRef === golferId);
-
-          if (isGolferInGroup) {
-            tripsData.push({
-              ...tripDoc.data(),
-              id: tripDoc.id,
-              groups: {
-                ...groupDoc.data(),
-                id: groupDoc.id,
-                golfers
-              }
-            });
-          }
+        // New path to check if the golfer is in the golfers subcollection of the golfTrip
+        const golferRef = doc(db, "golfTrips", tripDoc.id, "golfers", golferId);
+        const golferSnap = await getDoc(golferRef);
+  
+        if (golferSnap.exists()) {
+          // If the golfer is part of this trip, then fetch the groups
+          const groupsSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups`));
+          const groupsData = groupsSnapshot.docs.map(groupDoc => ({
+            ...groupDoc.data(),
+            id: groupDoc.id
+          }));
+  
+          // Add this trip to the myTripsData array
+          myTripsData.push({
+            ...tripDoc.data(),
+            id: tripDoc.id,
+            groups: groupsData,
+          });
         }
       }
-
-      // Sort the trips by date (ensure your dates are in a format that can be sorted)
-      tripsData.sort((a, b) => new Date(a.groups.groupDate) - new Date(b.groups.groupDate));
-
-      setMyTrips(tripsData);
+  
+      // Sort the trips by date
+      myTripsData.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+      setMyTrips(myTripsData);
     };
-
+  
     fetchMyTrips();
   }, [golferId]);
 
@@ -75,7 +73,7 @@ const MyTrips = () => {
           <div className="flex flex-col md:flex-row md:items-start gap-8">
             {/* Left Components - Conditionally render the left component based on left component state */}
               {showLeftComponent && (
-                <div className="flex-shrink-0 w-full md:w-1/3">
+                <div className="flex-shrink-0 w-full md:w-1/3 shadow-md">
                   <GolferItem golferRef={golferId} />
                   <GolferTripItem onDateSelect={handleDateSelect} />
                 </div>
@@ -83,14 +81,8 @@ const MyTrips = () => {
 
             {/* Right Components */}
             <div className="w-full">
-              {/* Render ScheduleAndGroupsByDate if a date is selected */}
-              {selectedDateInfo.date && (
-                <ScheduleAndGroupsByDate
-                  selectedDate={selectedDateInfo.date}
-                  golfTripId={selectedDateInfo.golfTripId}
-                />
-              )}
-  
+
+
               {/* Render DateDetails if a date is selected */}
               {selectedDateInfo.date && (
                 <DateDetails

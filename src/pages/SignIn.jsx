@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import OAuth from "../components/OAuth";
 import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
+import { db } from '../firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +15,28 @@ export default function SignIn() {
   });
   const {email, password} = formData;
   const navigate = useNavigate();
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    try {
+      const auth = getAuth();
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (userCredential.user) {
+        // Check if the user is part of any golf trips
+        const golferTripsQuery = query(collection(db, 'golfTrips'), where('golfers', 'array-contains', userCredential.user.uid));
+        const querySnapshot = await getDocs(golferTripsQuery);
+        if (querySnapshot.empty) {
+          // If the user is not part of any trips, redirect to join-trip
+          navigate('/join-trip');
+        } else {
+          // If the user is part of trips, redirect to mytrips
+          navigate('/mytrips');
+        }
+      }
+    } catch (error) {
+      toast.error("Bad user credentials");
+    }
+  }
 
   function onChange(e) {
     setFormData((prevState)=>({
@@ -36,16 +60,17 @@ export default function SignIn() {
       toast.error("Bad user credentials")
     }
   }
+
   return (
     <section>
-      <h1 className="text-3xl text-center mt-6 font-bold  text-green-300">
+      <h1 className="text-3xl text-center mt-6 font-bold  text-blue-100">
         Sign In
       </h1>
       <div className="flex justify-center flex-wrap items-center px-6 py-12 max-w-6xl mx-auto">
-        <div className="md:w-[67%] lg:w-[50%] mb-12 md:mb-6">
-          <img src="/mygolftrip_logo.png" 
+        <div className="md:w-[67%] lg:w-[50%] mb-1 md:mb-6">
+          <img src="/mygolftrip_logo2.svg" 
           alt="logo"
-          className="w-full rounded-2xl"/>
+          className="w-full rounded-2xl bg-blue-100"/>
         </div>
         <div className="w-full md:w-[67%] lg:w-[40%] lg:ml-20">
           <form
@@ -57,7 +82,7 @@ export default function SignIn() {
               onChange={onChange}
               placeholder="Email address"
               className="mb-6 w-full px-4 py-2 text-xl
-              text-gray-700 bg-white border-gray-300 first-letter
+              text-gray-700 bg-bground-100 border-gray-300 first-letter
               rounded transition ease-in-out"  
             />
             <div className="relative mb-6">
@@ -68,7 +93,7 @@ export default function SignIn() {
               onChange={onChange}
               placeholder="Password"
               className="w-full px-4 py-2 text-xl
-              text-gray-700 bg-white border-gray-300 first-letter
+              text-gray-700 bg-bground-100 border-gray-300 first-letter
               rounded transition ease-in-out"  
             />
             {showPassword ? (
@@ -88,16 +113,16 @@ export default function SignIn() {
               <p className="mb-6">
                 Don't have an account?
                 <Link to="/sign-up"
-                className="text-green-200
-                hover:text-white
+                className="text-green-100
+                hover:text-bground-100
                 transition duration-200
                 ease-in-out
                 ml-1">Register</Link>
               </p>
               <p>
                 <Link to="/forgotpassword"
-                 className="text-green-200
-                 hover:text-white
+                 className="text-green-100
+                 hover:text-bground-100
                  transition duration-200
                  ease-in-out
                  ml-1">Forgot 
@@ -105,21 +130,21 @@ export default function SignIn() {
               </p>
             </div>
             <button className="w-full bg-blue-100
-          text-green-200 px-7 py-3
+          text-green-100 px-7 py-3
           text-sm font-medium uppercase
-          rounded shadow-md hover:bg-green-200
-          hover:text-blue-200
+          rounded shadow-md hover:bg-green-100
+          hover:text-blue-100
           transition duration-150 ease-in-out
-          hover:shadow-lg active:bg-blue-200"
+          hover:shadow-lg active:bg-blue-100"
            type="submit"
            >Sign In
            </button>
            <div className="flex
            items-center my-4 
            before:border-t before:flex-1
-           before:border-gray-300
+           before:border-gray-100
            after:border-t after:flex-1
-           after:border-gray-300
+           after:border-gray-100
            ">
             <p className="text-center
             font-semibold mx-4">OR</p>

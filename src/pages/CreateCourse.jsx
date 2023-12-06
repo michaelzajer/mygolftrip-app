@@ -1,97 +1,112 @@
-import React from 'react';
-import { Formik, Form, Field } from 'formik';
+import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, doc, setDoc, addDoc, getDocs } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const CreateCourse = ({ golfTripId, courseId }) => {
     const [golfTrips, setGolfTrips] = useState([]);
     const [selectedGolfTripId, setSelectedGolfTripId] = useState('');
+    const [courseLocation, setCourseLocation] = useState('');
+    const [courseName, setCourseName] = useState('');
 
     useEffect(() => {
         const fetchGolfTrips = async () => {
-          const querySnapshot = await getDocs(collection(db, 'golfTrips'));
-          const trips = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setGolfTrips(trips);
+            const querySnapshot = await getDocs(collection(db, 'golfTrips'));
+            const trips = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setGolfTrips(trips);
         };
       
         fetchGolfTrips();
-      }, []);
+    }, []);
 
-      const handleSelectChange = (event) => {
-        console.log('Selected Golf Trip ID:', event.target.value); // Log the selected ID
+    const handleSelectChange = (event) => {
         setSelectedGolfTripId(event.target.value);
-      };
+    };
 
-  const initialValues = {
-    courseLocation: '',
-    courseName: ''
-  };
+    const handleSubmit = async (event) => {
+        event.preventDefault();
 
-  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-    try {
-      let courseRef;
-      if (courseId) {
-        // If courseId is provided, get a reference to the existing document
-        courseRef = doc(db, 'golfTrips', selectedGolfTripId, 'courses', courseId);
-        await setDoc(courseRef, values);
-      } else {
-        // If no courseId, create a new document in courses collection
-        courseRef = collection(db, 'golfTrips', selectedGolfTripId, 'courses');
-        await addDoc(courseRef, values);
-      }
-      // Reset the form after successful submission
-      resetForm();
-    } catch (error) {
-      console.error("Error adding/updating course: ", error);
-    }
-    setSubmitting(false); // Set submitting to false at the end of the function
-  };
+        try {
+            let courseRef;
+            if (courseId) {
+                courseRef = doc(db, 'golfTrips', selectedGolfTripId, 'courses', courseId);
+                await setDoc(courseRef, { courseLocation, courseName });
+            } else {
+                courseRef = collection(db, 'golfTrips', selectedGolfTripId, 'courses');
+                await addDoc(courseRef, { courseLocation, courseName });
+            }
+            // Reset form fields after successful submission
+            setCourseLocation('');
+            setCourseName('');
+        } catch (error) {
+            console.error("Error adding/updating course: ", error);
+        }
+    };
 
-  return (
-    <div>
-      <h3>Create Course</h3>
-      <label htmlFor="golfTripSelect">Select Golf Trip:</label>
-      <select
-        id="golfTripSelect"
-        value={selectedGolfTripId}
-        onChange={handleSelectChange}
-      >
-        <option value="">Select a trip</option>
-        {golfTrips.map((trip) => (
-          <option key={trip.id} value={trip.id}>
-            {trip.golfTripName}
-          </option>
-        ))}
-      </select>
-      <div>
-      <Formik initialValues={initialValues} onSubmit={handleSubmit}>
-        {({ isSubmitting }) => (
-          <Form>
-            <label htmlFor="courseLocation">Location</label>
-            <Field id="courseLocation" name="courseLocation" placeholder="Course Location" />
-            <label htmlFor="courseName">Course Name</label>
-            <Field id="courseName" name="courseName" placeholder="Course Name" />
-            <button type="submit" disabled={isSubmitting}>
-              {courseId ? 'Update Course' : 'Create Course'}
-            </button>
-          </Form>
-        )}
-      </Formik>
-      </div>
-      <div>
-      <Link to="/admin/createhole"
-    className="text-green-300 hover:text-blue-200 transition duration-200 ease-in-out ml-1"
-  >
-    Create Hole
-  </Link>
-      </div>
-    </div>
-  );
+    return (
+        <div className="p-6 bg-bground-100 min-h-screen">
+            <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow">
+                <h2 className="text-2xl font-bold mb-6 text-blue-100">Create or Update Course</h2>
+
+                <div className="mb-4">
+                    <label htmlFor="golfTripSelect" className="block text-grey-700 text-sm font-bold mb-2">Select Golf Trip:</label>
+                    <select
+                        id="golfTripSelect"
+                        className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                        value={selectedGolfTripId}
+                        onChange={handleSelectChange}
+                    >
+                        <option value="">Select a trip</option>
+                        {golfTrips.map((trip) => (
+                            <option key={trip.id} value={trip.id}>{trip.golfTripName}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                        <label htmlFor="courseLocation" className="block text-grey-700 text-sm font-bold mb-2">Location</label>
+                        <input
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                            id="courseLocation"
+                            type="text"
+                            placeholder="Course Location"
+                            value={courseLocation}
+                            onChange={(e) => setCourseLocation(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <label htmlFor="courseName" className="block text-grey-700 text-sm font-bold mb-2">Course Name</label>
+                        <input
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                            id="courseName"
+                            type="text"
+                            placeholder="Course Name"
+                            value={courseName}
+                            onChange={(e) => setCourseName(e.target.value)}
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="bg-blue-100 text-white py-2 px-4 rounded hover:bg-blue-300 focus:outline-none focus:shadow-outline"
+                    >
+                        {courseId ? 'Update Course' : 'Create Course'}
+                    </button>
+                </form>
+
+                <div className="mt-4">
+                    <Link to="/admin/createhole" className="text-blue-100 hover:text-blue-300 transition duration-200 ease-in-out">
+                        Create Hole
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default CreateCourse;

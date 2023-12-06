@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom"
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, getFirestore } from "firebase/firestore"; // Import required Firestore functions
 
 export default function Header() {
     const [pageState, setPageState] = useState("Sign In");
@@ -8,20 +9,25 @@ export default function Header() {
     const location = useLocation()
     const navigate = useNavigate()
     const auth = getAuth();
-
-    const ADMIN_USER_ID = "orGREHRCTCgFgfeijAcxIFjN8TC3"; // Replace with your admin user ID
+    const db = getFirestore(); // Initialize Firestore
 
     useEffect (()=>{
-        onAuthStateChanged(auth, (user)=>{
-            if(user){
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
                 setPageState('Profile');
-                setIsAdmin(user.uid === ADMIN_USER_ID); // Set isAdmin based on whether the user is admin
-            }else{
-                setPageState('Sign in');
-                setIsAdmin(false); // Not logged in, so definitely not admin
+                // Fetch isAdmin flag from Firestore
+                const userRef = doc(db, "golfers", user.uid);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    setIsAdmin(userSnap.data().isAdmin); // Set isAdmin based on Firestore data
+                }
+            } else {
+                setPageState('Sign In');
+                setIsAdmin(false);
             }
-        })
-    }, [auth])
+        });
+    }, [auth, db]);
+
     function pathMatchRoute(route){
         if(route === location.pathname){
             return true

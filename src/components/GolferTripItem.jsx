@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getDocs, collection } from 'firebase/firestore';
+import { getDocs, collection, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import moment from 'moment';
+import { getAuth } from "firebase/auth";
 
 const formatDate = (dateString) => {
     return moment(dateString).format('ddd DD-MM-YY');
@@ -22,24 +23,39 @@ const formatDate = (dateString) => {
 
 const GolferTripItem = (props) => {
   const [trips, setTrips] = useState([]);
+  const auth = getAuth();
+  const golferId = auth.currentUser?.uid; // Get the current golfer's ID
 
   useEffect(() => {
     const fetchTrips = async () => {
+      if (!golferId) return; // Ensure there is a logged-in golfer
+
       const tripsSnapshot = await getDocs(collection(db, 'golfTrips'));
-      setTrips(tripsSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          golfTripName: data.golfTripName,
-          tripStartDate: data.tripStartDate ? formatDate(data.tripStartDate) : 'N/A',
-          tripEndDate: data.tripEndDate ? formatDate(data.tripEndDate) : 'N/A',
-          dateRange: data.tripStartDate && data.tripEndDate ? getDateRange(data.tripStartDate, data.tripEndDate) : []
-        };
-      }));
+      const tripsData = [];
+
+      for (const tripDoc of tripsSnapshot.docs) {
+        // Check if the golfer is part of the golfers subcollection for the trip
+        const golferRef = doc(db, 'golfTrips', tripDoc.id, 'golfers', golferId);
+        const golferSnap = await getDoc(golferRef);
+
+        if (golferSnap.exists()) {
+          // If the golfer is part of the trip, include it in the tripsData array
+          const data = tripDoc.data();
+          tripsData.push({
+            id: tripDoc.id,
+            golfTripName: data.golfTripName,
+            tripStartDate: data.tripStartDate ? formatDate(data.tripStartDate) : 'N/A',
+            tripEndDate: data.tripEndDate ? formatDate(data.tripEndDate) : 'N/A',
+            dateRange: data.tripStartDate && data.tripEndDate ? getDateRange(data.tripStartDate, data.tripEndDate) : [],
+          });
+        }
+      }
+
+      setTrips(tripsData); // Set the filtered trips to state
     };
-    
+
     fetchTrips();
-  }, []);
+  }, [golferId]); // Rerun the effect if golferId changes
 
   return (
     <>

@@ -107,47 +107,73 @@ const AdminScoreCard = () => {
   };
 
   return (
-    <div>
-      <h2>Create Scorecards for Golfers</h2>
-      <div>
-        <label>Golf Trip:</label>
-        <select onChange={e => setSelectedGolfTripId(e.target.value)} value={selectedGolfTripId}>
-          <option value="">Select a trip</option>
-          {golfTrips.map(trip => (
-            <option key={trip.id} value={trip.id}>{trip.golfTripName}</option>
-          ))}
-        </select>
+    <div className="p-6 bg-white min-h-screen">
+      <div className="max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6 text-blue-500">Create Scorecards for Golfers</h2>
+        
+        <div className="mb-4">
+          <label className="block text-grey-700 text-sm font-bold mb-2">Golf Trip:</label>
+          <select 
+            className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight focus:outline-none focus:shadow-outline"
+            onChange={e => setSelectedGolfTripId(e.target.value)} 
+            value={selectedGolfTripId}
+          >
+            <option value="">Select a trip</option>
+            {golfTrips.map(trip => (
+              <option key={trip.id} value={trip.id}>{trip.golfTripName}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-grey-700 text-sm font-bold mb-2">Course:</label>
+          <select 
+            className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight focus:outline-none focus:shadow-outline"
+            onChange={e => setSelectedCourseId(e.target.value)} 
+            value={selectedCourseId}
+          >
+            <option value="">Select a course</option>
+            {courses.map(course => (
+              <option key={course.id} value={course.id}>{course.courseName}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-grey-700 text-sm font-bold mb-2">Tees:</label>
+          <select 
+            className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight focus:outline-none focus:shadow-outline"
+            onChange={e => setSelectedTeeId(e.target.value)} 
+            value={selectedTeeId}
+          >
+            <option value="">Select tees</option>
+            {tees.map(tee => (
+              <option key={tee.id} value={tee.id}>{tee.teeName}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-grey-700 text-sm font-bold mb-2">Group:</label>
+          <select 
+            className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight focus:outline-none focus:shadow-outline"
+            onChange={e => setSelectedGroupId(e.target.value)} 
+            value={selectedGroupId}
+          >
+            <option value="">Select a group</option>
+            {groups.map(group => (
+              <option key={group.id} value={group.id}>{group.groupDate}{group.groupName}</option>
+            ))}
+          </select>
+        </div>
+
+        <button 
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          onClick={() => createScorecardReferencesForGroup()}
+        >
+          Create Scorecards
+        </button>
       </div>
-      <div>
-        <label>Course:</label>
-        <select onChange={e => setSelectedCourseId(e.target.value)} value={selectedCourseId}>
-          <option value="">Select a course</option>
-          {courses.map(course => (
-            <option key={course.id} value={course.id}>{course.courseName}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label>Tees:</label>
-        <select onChange={e => setSelectedTeeId(e.target.value)} value={selectedTeeId}>
-          <option value="">Select tees</option>
-          {tees.map(tee => (
-            <option key={tee.id} value={tee.id}>{tee.teeName}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label>Group:</label>
-        <select onChange={e => setSelectedGroupId(e.target.value)} value={selectedGroupId}>
-          <option value="">Select a group</option>
-          {groups.map(group => (
-            <option key={group.id} value={group.id}>{group.groupDate}{group.groupName}</option>
-          ))}
-        </select>
-      </div>
-      <button onClick={() => createScorecardReferencesForGroup()}>
-  Create Scorecards
-</button>
     </div>
   );
 };

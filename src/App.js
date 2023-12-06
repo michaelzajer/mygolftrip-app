@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home"
 import Profile from "./pages/Profile"
@@ -6,12 +7,10 @@ import SignUp from "./pages/SignUp"
 import ForgotPassword from "./pages/ForgotPassword"
 import Header from "./components/Header";
 import Mytrips from "./pages/Mytrips";
-import LeaderBoard from "./pages/LeaderboardGroups";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import PrivateRoute from "./components/PrivateRoute";
 import Admin from "./pages/Admin";
-import CreateGolfer from "./pages/CreateGolfer";
 import CreateTrip from "./pages/CreateTrip";
 import TripList from "./pages/TripList";
 import LeaderBoardGroups from "./pages/LeaderboardGroups";
@@ -25,8 +24,37 @@ import CreateTeeBlock from "./pages/CreateTeeBlock";
 import ScoreCard from "./components/ScoreCard";
 import AdminScoreCard from "./pages/AdminScoreCard";
 import AdminDailyHcp from "./pages/AdminDailyHcp";
+import { doc, getDoc } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { db } from './firebase'; // Adjust this path to point to your firebase configuration
+import EditTrip from "./pages/EditTrip";
+import SendInvite from "./pages/SendInvite";
+import JoinTrip from "./pages/JoinTrip";
+import About from "./pages/About"
 
 function App() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const auth = getAuth();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Fetch user data from Firestore
+        const userRef = doc(db, "golfers", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          // Set isAdmin based on the user's data
+          setIsAdmin(userSnap.data().isAdmin || false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
+
   return (
 
     <>
@@ -34,6 +62,7 @@ function App() {
         <Header/>
         <Routes>
           <Route path="/" element={<Home/>} />
+          <Route path="/about" element={<About/>} />
           <Route path="/sign-in" element={<SignIn/>} />
           <Route path="/sign-up" element={<SignUp/>} />
           <Route path="/profile" element={<PrivateRoute/>}>
@@ -41,6 +70,9 @@ function App() {
           </Route>
           <Route path="/mytrips" element={<PrivateRoute/>}>
             <Route path="/mytrips" element={<Mytrips/>} />
+          </Route>
+          <Route path="/join-trip" element={<PrivateRoute/>}>
+            <Route path="/join-trip" element={<JoinTrip/>} />
           </Route>
           <Route path="/mytrips" element={<PrivateRoute/>}>
             <Route path="/mytrips/scorecard" element={<ScoreCard />} />
@@ -57,35 +89,23 @@ function App() {
           <Route path="/leaderboardoverall" element={<PrivateRoute/>}>
             <Route path="/leaderboardoverall" element={<LeaderboardOverall />} />
           </Route>
-          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
-          <Route path="" element={<Admin/>} />
-          </Route>
-          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
-          <Route path="/admin/createtrip" element={<CreateTrip/>} />
-          </Route>
-          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
-          <Route path="/admin/triplist" element={<TripList/>} />
-          </Route>
-          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
-          <Route path="/admin/scheduletrip" element={<AdminSchedulePage/>} />
-          </Route>
-          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
-          <Route path="/admin/createcourse" element={<CreateCourse/>} />
-          </Route>
-          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
-          <Route path="/admin/createhole" element={<CreateHole/>} />
-          </Route>
-          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
-          <Route path="/admin/createtee" element={<CreateTeeBlock/>} />
-          </Route>
-          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
-          <Route path="/admin/scorecard" element={<AdminScoreCard />} />
-          </Route>
-          <Route path="/admin" element={<PrivateRoute allowedUserId="orGREHRCTCgFgfeijAcxIFjN8TC3" />}>
-          <Route path="/admin/adddailyhcp" element={<AdminDailyHcp />} />
-          </Route>
+          {isAdmin && (
+            <Route path="/admin" element={<PrivateRoute />}>
+              <Route path="" element={<Admin/>} />
+              <Route path="/admin/createtrip" element={<CreateTrip/>} />
+              <Route path="/admin/triplist" element={<TripList/>} />
+              <Route path="/admin/edit-trip" element={<EditTrip/>} />
+              <Route path="/admin/tripinvite" element={<SendInvite/>} />
+              <Route path="/admin/scheduletrip" element={<AdminSchedulePage/>} />
+              <Route path="/admin/createcourse" element={<CreateCourse/>} />
+              <Route path="/admin/createhole" element={<CreateHole/>} />
+              <Route path="/admin/createtee" element={<CreateTeeBlock/>} />
+              <Route path="/admin/scorecard" element={<AdminScoreCard />} />
+              <Route path="/admin/adddailyhcp" element={<AdminDailyHcp />} />
+            </Route>
+          )}
+        
           <Route path="/ForgotPassword" element={<ForgotPassword/>} />
-          
         </Routes>
       </Router>
       <ToastContainer

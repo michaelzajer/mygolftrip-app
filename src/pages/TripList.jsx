@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase'; // Adjust this path to point to your firebase configuration
+import { db } from '../firebase';
 import { collection, getDocs, doc, deleteDoc, setDoc } from 'firebase/firestore';
 
 const TripList = () => {
@@ -8,52 +8,38 @@ const TripList = () => {
   const [selectedGolfer, setSelectedGolfer] = useState('');
   const [editGroupTripId, setEditGroupTripId] = useState(null);
   const [editGroupId, setEditGroupId] = useState(null);
+  const [viewDetailsTripId, setViewDetailsTripId] = useState(null);
+
 
   useEffect(() => {
-    // Fetch the list of golfers
     const fetchGolfers = async () => {
       const golfersSnapshot = await getDocs(collection(db, 'golfers'));
       setGolfers(golfersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     };
-    fetchGolfers();
 
-    // Fetch the list of trips and groups
     const fetchTrips = async () => {
-      const tripsCollectionRef = collection(db, 'golfTrips');
-      const tripsSnapshot = await getDocs(tripsCollectionRef);
+      const tripsSnapshot = await getDocs(collection(db, 'golfTrips'));
       const tripsData = await Promise.all(
         tripsSnapshot.docs.map(async (tripDoc) => {
-          const groupsCollectionRef = collection(db, `golfTrips/${tripDoc.id}/groups`);
-          const groupsSnapshot = await getDocs(groupsCollectionRef);
-    
-          // Map and sort groups by date
+          const groupsSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups`));
           const groupsData = groupsSnapshot.docs.map(groupDoc => {
             const groupData = groupDoc.data();
             return {
               id: groupDoc.id,
               ...groupData,
-              // Parse groupDate as Date object if it exists and is a valid date string
               groupDate: groupData.groupDate ? new Date(groupData.groupDate) : null,
             };
-          }).sort((a, b) => {
-            // Move items with null groupDate to the end
-            if (!a.groupDate) return 1;
-            if (!b.groupDate) return -1;
-            // Sort by groupDate ascending
-            return a.groupDate - b.groupDate;
-          });
-    
-          // Fetch golfers for each group
+          }).sort((a, b) => a.groupDate - b.groupDate);
+
           const groupsWithGolfers = await Promise.all(groupsData.map(async (group) => {
-            const golfersCollectionRef = collection(db, `golfTrips/${tripDoc.id}/groups/${group.id}/golfers`);
-            const golfersSnapshot = await getDocs(golfersCollectionRef);
+            const golfersSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups/${group.id}/golfers`));
             const golfersData = golfersSnapshot.docs.map(golferDoc => golferDoc.data());
             return {
               ...group,
               golfers: golfersData,
             };
           }));
-    
+
           return {
             id: tripDoc.id,
             ...tripDoc.data(),
@@ -61,159 +47,155 @@ const TripList = () => {
           };
         })
       );
-      
       setTrips(tripsData);
     };
-    
+
+    fetchGolfers();
     fetchTrips();
-    
   }, []);
 
-  const handleEditGroup = (tripId, groupId) => {
-    setEditGroupTripId(tripId);
-    setEditGroupId(groupId);
-  };
+    const handleEditGroup = async (tripId, groupId) => {
+        setEditGroupTripId(tripId);
+        setEditGroupId(groupId);
+        // Fetch the golfers from the selected trip's golfers subcollection
+        const golfersSnapshot = await getDocs(collection(db, `golfTrips/${tripId}/golfers`));
+        setGolfers(golfersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    };
 
-  const handleAddGolferToGroup = async () => {
-    if (!editGroupTripId || !editGroupId || !selectedGolfer) {
-      alert('You must select a golfer to add.');
-      return;
-    }
+    const handleAddGolferToGroup = async () => {
+        if (!editGroupTripId || !editGroupId || !selectedGolfer) {
+            alert('You must select a golfer to add.');
+            return;
+        }
 
-    const golferToAdd = golfers.find(golfer => golfer.id === selectedGolfer);
-    
-    if (!golferToAdd) {
-      
-      alert('Selected golfer not found.');
-      return;
-      
-    }
+        const golferToAdd = golfers.find(golfer => golfer.id === selectedGolfer);
 
-    const groupGolfersRef = doc(db, `golfTrips/${editGroupTripId}/groups/${editGroupId}/golfers`, golferToAdd.id);
+        if (!golferToAdd) {
+            alert('Selected golfer not found.');
+            return;
+        }
 
-    try {
-      await setDoc(groupGolfersRef, {
-          golferName: golferToAdd.name,
-          golferRef: golferToAdd.id,
-          score: null,
-          dailyHcp: null,
-          // Add other golfer details here if necessary
-      });
-      
-      alert('Golfer added to group successfully!');
-      // Clear the selected golfer and close the edit form
-      setSelectedGolfer('');
-      // Refresh the list to show the updated group
-      // (You might need to implement this depending on how you manage state)
-    } catch (error) {
-      console.error('Error adding golfer to group: ', error);
-      alert('There was an error adding the golfer to the group.');
-    }
-  };
+        const groupGolfersRef = doc(db, `golfTrips/${editGroupTripId}/groups/${editGroupId}/golfers`, golferToAdd.id);
 
-  const handleRemoveGolferFromGroup = async (tripId, groupId, golferId) => {
-    console.log("Removing golfer with ID:", golferId, "from group:", groupId, "in trip:", tripId);
-    
-    // Create a reference to the golfer's document
-    const golferDocRef = doc(db, `golfTrips/${tripId}/groups/${groupId}/golfers`, golferId);
-  
-    try {
-      // Delete the golfer's document
-      await deleteDoc(golferDocRef);
-  
-      alert('Golfer removed from group successfully!');
-      // Refresh the list to show the updated group
-      // You will likely need to fetch the trip data again or remove the golfer from the state
-    } catch (error) {
-      console.error('Error removing golfer from group: ', error);
-      alert('There was an error removing the golfer from the group.');
-    }
-  };
-  
+        try {
+            await setDoc(groupGolfersRef, {
+                golferName: golferToAdd.golferName,
+                golferRef: golferToAdd.id,
+                score: null,
+                dailyHcp: null,
+            });
 
-  return (
-    <div className="overflow-x-auto relative shadow-md sm:rounded-lg">
-      <table className="w-full text-sm text-left text-gray-500">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-          <tr>
-            <th scope="col" className="py-3 px-6">
-              Trip Name
-            </th>
-            <th scope="col" className="py-3 px-6">
-              Start Date
-            </th>
-            <th scope="col" className="py-3 px-6">
-              End Date
-            </th>
-            <th scope="col" className="py-3 px-6">
-              Group Details
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {trips?.map((trip) => (
-            <tr key={trip.id} className="bg-white border-b">
-              <td className="py-4 px-6">
-                {trip.golfTripName}
-              </td>
-              <td className="py-4 px-6">
-                {trip.tripStartDate}
-              </td>
-              <td className="py-4 px-6">
-                {trip.tripEndDate}
-              </td>
-              <td className="py-4 px-6">
-                {trip.groups?.map((group, index) => (
-                  <div key={index} className="mb-4">
-                    <div className="font-bold">
-                      {group.groupName} - {group.groupDate ? group.groupDate.toLocaleDateString() : 'No date'}
+            alert('Golfer added to group successfully!');
+            setSelectedGolfer('');
+        } catch (error) {
+            console.error('Error adding golfer to group: ', error);
+            alert('There was an error adding the golfer to the group.');
+        }
+    };
+
+    const handleRemoveGolferFromGroup = async (tripId, groupId, golferId) => {
+        try {
+            await deleteDoc(doc(db, `golfTrips/${tripId}/groups/${groupId}/golfers`, golferId));
+            alert('Golfer removed from group successfully!');
+        } catch (error) {
+            console.error('Error removing golfer from group: ', error);
+            alert('There was an error removing the golfer from the group.');
+        }
+    };
+
+    const handleToggleDetails = (tripId) => {
+      if (viewDetailsTripId === tripId) {
+        // If the details for this trip are already visible, hide them
+        setViewDetailsTripId(null);
+      } else {
+        // Show the details for the clicked trip
+        setViewDetailsTripId(tripId);
+      }
+    };
+
+    return (
+      <div className="p-6 bg-gray-100 min-h-screen">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold mb-6 text-gray-800">Trip List</h2>
+          {trips.map((trip) => (
+            <div key={trip.id} className="mb-4">
+              <div
+                onClick={() => handleToggleDetails(trip.id)}
+                className="flex justify-between items-center p-4 bg-white rounded-lg shadow cursor-pointer hover:bg-gray-50"
+              >
+                <h3 className="text-xl font-semibold text-gray-700">{trip.golfTripName}</h3>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 text-gray-700"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  {viewDetailsTripId === trip.id ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  )}
+                </svg>
+              </div>
+              {viewDetailsTripId === trip.id && (
+                <div className="mt-2 p-4 bg-gray-50 rounded-lg">
+                  {trip.groups.map((group, index) => (
+                    <div key={index} className="mb-4 space-y-2">
+                      <div className="font-bold flex justify-between items-center">
+                        {group.groupName} - {group.groupDate ? group.groupDate.toLocaleDateString() : 'No date'}
+                        <button
+                          onClick={() => handleEditGroup(trip.id, group.id)}
+                          className="text-sm bg-blue-100 hover:bg-blue-300 text-white py-1 px-2 rounded focus:outline-none"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1">
+                        {group.golfers.map((golfer, golferIndex) => (
+                          <li key={golferIndex} className="flex justify-between items-center">
+                            {golfer.golferName}
+                            <button
+                              onClick={() => handleRemoveGolferFromGroup(trip.id, group.id, golfer.golferRef)}
+                              className="text-sm bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded focus:outline-none"
+                            >
+                              Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                  {editGroupTripId && editGroupId && (
+                    <div className="mt-4 p-4 bg-white border rounded-lg">
+                      <h3 className="text-xl font-semibold mb-4">Edit Group</h3>
+                      <div className="mb-4">
+                        <select
+                          value={selectedGolfer}
+                          onChange={(e) => setSelectedGolfer(e.target.value)}
+                          className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                        >
+                          <option value="">Select a Golfer</option>
+                          {golfers.map((golfer) => (
+                            <option key={golfer.id} value={golfer.id}>{golfer.golferName}</option>
+                          ))}
+                        </select>
+                      </div>
                       <button
-                        onClick={() => handleEditGroup(trip.id, group.id)}
-                        className="ml-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        onClick={handleAddGolferToGroup}
+                        className="bg-green-100 hover:bg-green-300 text-white py-2 px-4 rounded focus:outline-none"
                       >
-                        Edit
+                        Add Golfer to Group
                       </button>
                     </div>
-                    <ul className="list-disc list-inside">
-                {group.golfers?.map((golfer, golferIndex) => (
-                  <li key={golferIndex} className="flex justify-between items-center">
-                    {golfer.golferName}
-                    <button
-                      onClick={() => handleRemoveGolferFromGroup(trip.id, group.id, golfer.golferRef)}
-                      className="ml-2 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-                  </div>
-                ))}
-              </td>
-            </tr>
+                  )}
+                </div>
+              )}
+            </div>
           ))}
-        </tbody>
-      </table>
-
-      {/* Edit Group Form */}
-      {editGroupTripId && editGroupId && (
-        <div>
-          <h3>Edit Group</h3>
-          <select value={selectedGolfer} onChange={(e) => setSelectedGolfer(e.target.value)}>
-            <option value="">Select a Golfer</option>
-            {golfers?.map((golfer) => (
-              <option key={golfer.id} value={golfer.id}>
-                {golfer.name}
-              </option>
-            ))}
-          </select>
-          <button onClick={handleAddGolferToGroup} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-            Add Golfer to Group
-          </button>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
 };
 
 export default TripList;

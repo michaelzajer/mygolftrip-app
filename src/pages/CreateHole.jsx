@@ -1,166 +1,170 @@
-
-import React from 'react';
-import { Formik, Form, Field, FieldArray } from 'formik';
+import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, doc, setDoc, addDoc, getDocs, writeBatch } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
-
-const CreateHole = ({ holeId }) => {
+const CreateHole = () => {
     const [golfTrips, setGolfTrips] = useState([]);
     const [courses, setCourses] = useState([]);
     const [tees, setTees] = useState([]);
     const [selectedGolfTripId, setSelectedGolfTripId] = useState('');
     const [selectedCourseId, setSelectedCourseId] = useState('');
     const [selectedTeeId, setSelectedTeeId] = useState('');
+    const [holes, setHoles] = useState(Array.from({ length: 18 }, () => ({
+        holeLength: '',
+        holePar: '',
+        holeIndex: '',
+    })));
 
     useEffect(() => {
         const fetchGolfTrips = async () => {
-          const querySnapshot = await getDocs(collection(db, 'golfTrips'));
-          const trips = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setGolfTrips(trips);
+            const querySnapshot = await getDocs(collection(db, 'golfTrips'));
+            const trips = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setGolfTrips(trips);
         };
-      
         fetchGolfTrips();
-      }, []);
+    }, []);
 
-      useEffect(() => {
+    useEffect(() => {
         const fetchCourses = async () => {
-          if (selectedGolfTripId) {
-            const coursesSnapshot = await getDocs(collection(db, 'golfTrips', selectedGolfTripId, 'courses'));
-            setCourses(coursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-          }
+            if (selectedGolfTripId) {
+                const coursesSnapshot = await getDocs(collection(db, 'golfTrips', selectedGolfTripId, 'courses'));
+                setCourses(coursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            } else {
+                setCourses([]);
+            }
         };
-    
         fetchCourses();
-      }, [selectedGolfTripId]);
+    }, [selectedGolfTripId]);
 
-      useEffect(() => {
+    useEffect(() => {
         const fetchTees = async () => {
-          if (selectedCourseId) {
-            const teesSnapshot = await getDocs(collection(db, 'golfTrips', selectedGolfTripId, 'courses', selectedCourseId, 'tees'));
-            setTees(teesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-          } else {
-            setTees([]); // Clear tees if no course is selected
-          }
+            if (selectedCourseId) {
+                const teesSnapshot = await getDocs(collection(db, 'golfTrips', selectedGolfTripId, 'courses', selectedCourseId, 'tees'));
+                setTees(teesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            } else {
+                setTees([]); // Clear tees if no course is selected
+            }
         };
         fetchTees();
-      }, [selectedGolfTripId, selectedCourseId]); // This will run when selectedCourseId changes
+    }, [selectedGolfTripId, selectedCourseId]);
 
-
-      const handleGolfTripChange = (event) => {
-        const tripId = event.target.value;
-        setSelectedGolfTripId(tripId);
-        setSelectedCourseId(''); // Reset the selected course ID when the trip changes
-      };
-    
-      const handleCourseChange = (event) => {
-        setSelectedCourseId(event.target.value);
-      };
-
-      const handleTeeChange = (event) => {
-        setSelectedTeeId(event.target.value);
-      };
-
-      const initialValues = {
-        holes: Array.from({ length: 18 }, () => ({
-            holeNumber: '',
-            holeLength: '',
-            holePar: '',
-            holeIndex: '',
-        })),
+    const handleInputChange = (index, field, value) => {
+        const newHoles = [...holes];
+        newHoles[index][field] = value;
+        setHoles(newHoles);
     };
 
-    const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-        const batch = writeBatch(db); // Create a batch operation
-    
-        values.holes.forEach((hole, index) => {
-          if (hole.holeLength && hole.holePar && hole.holeIndex) {
-            const holeNumber = index + 1; // Assuming hole numbers start from 1
-            const holeDocRef = doc(db, 'golfTrips', selectedGolfTripId, 'courses', selectedCourseId, 'tees', selectedTeeId, 'holes', `${holeNumber}`);
-            batch.set(holeDocRef, { ...hole, holeNumber });
-          }
+    const handleSubmit = async () => {
+        const batch = writeBatch(db);
+
+        holes.forEach((hole, index) => {
+            if (hole.holeLength && hole.holePar && hole.holeIndex) {
+                const holeDocRef = doc(db, 'golfTrips', selectedGolfTripId, 'courses', selectedCourseId, 'tees', selectedTeeId, 'holes', `${index + 1}`);
+                batch.set(holeDocRef, { ...hole, holeNumber: index + 1 });
+            }
         });
-    
+
         try {
-          await batch.commit(); // Commit the batch operation
-          resetForm(initialValues);
+            await batch.commit();
+            alert('Holes created successfully!');
         } catch (error) {
-          console.error("Error adding holes: ", error);
+            console.error("Error adding holes: ", error);
         }
-    
-        setSubmitting(false);
-      };
-  
-  return (
-    <div>
-      <h3>Create Hole</h3>
-      <Formik initialValues={initialValues} onSubmit={handleSubmit}>
-      {({ values, isSubmitting }) => (
-          <Form>
-            <label htmlFor="golfTripSelect">Select Golf Trip:</label>
-            <Field as="select" id="golfTripSelect" name="golfTrip" onChange={handleGolfTripChange}>
-              <option value="">Select a trip</option>
-              {golfTrips.map(trip => (
-                <option key={trip.id} value={trip.id}>{trip.golfTripName}</option>
-              ))}
-            </Field>
+    };
 
-            {selectedGolfTripId && (
-              <>
-                <label htmlFor="courseSelect">Select Course:</label>
-                <Field as="select" id="courseSelect" name="course" onChange={handleCourseChange}>
-                  <option value="">Select a course</option>
-                  {courses.map(course => (
-                    <option key={course.id} value={course.id}>{course.courseName}</option>
-                  ))}
-                </Field>
-
-                {selectedCourseId && (
-                    <>
-                        <label htmlFor="teeSelect">Select Tee:</label>
-                        <Field as="select" id="teeSelect" name="tee" onChange={handleTeeChange}>
-                        <option value="">Select a tee</option>
-                        {tees.map(tee => (
-                            <option key={tee.id} value={tee.id}>{tee.teeName}</option>
+    return (
+        <div className="p-6 bg-bground-100 min-h-screen">
+            <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow">
+                <h2 className="text-2xl font-bold mb-6 text-blue-100">Create Holes</h2>
+                {/* Golf Trip Selection */}
+                <div className="mb-4">
+                    <select
+                        className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                        value={selectedGolfTripId}
+                        onChange={(e) => setSelectedGolfTripId(e.target.value)}
+                    >
+                        <option value="">Select a Golf Trip</option>
+                        {golfTrips.map(trip => (
+                            <option key={trip.id} value={trip.id}>{trip.golfTripName}</option>
                         ))}
-                        </Field>
-                    </>
-                    )}
-              </>
-            )}
-<FieldArray name="holes">
-                            {({ insert, remove, push }) => (
-                                <div>
-                                    {values.holes.length > 0 &&
-                                        values.holes.map((hole, index) => (
-                                            <div key={index}>
-                                                <label htmlFor={`holes.${index}.holeNumber`}>Hole Number</label>
-                                                <Field name={`holes.${index}.holeNumber`} placeholder="Hole Number" />
+                    </select>
+                </div>
 
-                                                <label htmlFor={`holes.${index}.holeLength`}>Hole Length</label>
-                                                <Field name={`holes.${index}.holeLength`} placeholder="Hole Length" />
-
-                                                <label htmlFor={`holes.${index}.holePar`}>Hole Par</label>
-                                                <Field name={`holes.${index}.holePar`} placeholder="Hole Par" />
-
-                                                <label htmlFor={`holes.${index}.holeIndex`}>Hole Index</label>
-                                                <Field name={`holes.${index}.holeIndex`} placeholder="Hole Index" />
-                                            </div>
-                                        ))}
-                                </div>
-                            )}
-                        </FieldArray>
-
-                        <button type="submit" disabled={isSubmitting}>
-                            Create Holes
-                        </button>
-                    </Form>
+                {/* Course Selection */}
+                {selectedGolfTripId && (
+                    <div className="mb-4">
+                        <select
+                            className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                            value={selectedCourseId}
+                            onChange={(e) => setSelectedCourseId(e.target.value)}
+                        >
+                            <option value="">Select a Course</option>
+                            {courses.map(course => (
+                                <option key={course.id} value={course.id}>{course.courseName}</option>
+                            ))}
+                        </select>
+                    </div>
                 )}
-            </Formik>
+
+                {/* Tee Selection */}
+                {selectedCourseId && (
+                    <div className="mb-4">
+                        <select
+                            className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                            value={selectedTeeId}
+                            onChange={(e) => setSelectedTeeId(e.target.value)}
+                        >
+                            <option value="">Select a Tee</option>
+                            {tees.map(tee => (
+                                <option key={tee.id} value={tee.id}>{tee.teeName}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* Holes Input */}
+                {selectedTeeId && (
+                    <div>
+                        {holes.map((hole, index) => (
+                            <div key={index} className="mb-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <input
+                                        className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                                        type="text"
+                                        placeholder={`Hole ${index + 1} Length`}
+                                        value={hole.holeLength}
+                                        onChange={(e) => handleInputChange(index, 'holeLength', e.target.value)}
+                                    />
+                                    <input
+                                        className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
+                                        type="text"
+                                        placeholder={`Hole ${index + 1} Par`}
+                                        value={hole.holePar}
+                                        onChange={(e) => handleInputChange(index, 'holePar', e.target.value)}
+                                    />
+                                </div>
+                                <input
+                                    className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight mt-4"
+                                    type="text"
+                                    placeholder={`Hole ${index + 1} Index`}
+                                    value={hole.holeIndex}
+                                    onChange={(e) => handleInputChange(index, 'holeIndex', e.target.value)}
+                                />
+                            </div>
+                        ))}
+                        <button
+                            className="bg-blue-100 text-white py-2 px-4 rounded hover:bg-blue-300 focus:outline-none focus:shadow-outline"
+                            onClick={handleSubmit}
+                        >
+                            Submit Holes
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

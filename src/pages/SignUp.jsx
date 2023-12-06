@@ -45,6 +45,8 @@ export default function SignUp() {
         delete formDataCopy.password
         formDataCopy.timestamp = serverTimestamp();
         formDataCopy.golferRef = user.uid;
+        formDataCopy.isAdmin = false; // Add this line to set isAdmin as false
+
 
         await setDoc(doc(db, "golfers", 
         user.uid), formDataCopy)
@@ -60,7 +62,7 @@ export default function SignUp() {
       </h1>
       <div className="flex justify-center flex-wrap items-center px-6 py-12 max-w-6xl mx-auto">
         <div className="md:w-[67%] lg:w-[50%] mb-12 md:mb-6">
-        <img src="/mygolftrip_logo.png" 
+        <img src="/mygolftrip_logo2.png" 
           alt="logo"
           className="w-full rounded-2xl"/>
         </div>
