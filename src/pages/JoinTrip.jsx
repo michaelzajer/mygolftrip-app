@@ -5,7 +5,7 @@ import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const JoinTrip = () => {
-  const [joinCode, setJoinCode] = useState('');
+  const [tripId, setTripId] = useState('');
   const [tripDetails, setTripDetails] = useState(null);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,21 +14,19 @@ const JoinTrip = () => {
   const auth = getAuth();
 
   useEffect(() => {
-    // Check if the URL has a joinCode query parameter
+    // Check if the URL has a tripId query parameter
     const queryParams = new URLSearchParams(location.search);
-    const joinCodeParam = queryParams.get('code');
-    if (joinCodeParam) {
-      setJoinCode(joinCodeParam);
-      fetchTripDetails(joinCodeParam); // Fetch trip details based on joinCode
+    const tripIdParam = queryParams.get('id');
+    if (tripIdParam) {
+      setTripId(tripIdParam);
+      fetchTripDetails(tripIdParam); // Fetch trip details based on tripId
     }
   }, [location]);
 
-  // Fetch trip details based on join code
-  const fetchTripDetails = async (code) => {
+  // Fetch trip details based on trip ID
+  const fetchTripDetails = async (id) => {
     try {
-      // Here you would query your database for the trip that matches the join code
-      // For simplicity, I'm assuming the trip ID is the same as the join code
-      const tripRef = doc(db, 'golfTrips', code);
+      const tripRef = doc(db, 'golfTrips', id);
       const tripSnap = await getDoc(tripRef);
       if (tripSnap.exists()) {
         setTripDetails(tripSnap.data());
@@ -41,8 +39,8 @@ const JoinTrip = () => {
   };
 
   const handleJoinTrip = async () => {
-    if (!joinCode.trim()) {
-        setStatus("Please enter a valid join code.");
+    if (!tripId.trim()) {
+        setStatus("Please enter a valid trip ID.");
         return;
     }
 
@@ -59,7 +57,7 @@ const JoinTrip = () => {
         }
 
         // Fetch the trip to check if it exists
-        const tripRef = doc(db, 'golfTrips', joinCode);
+        const tripRef = doc(db, 'golfTrips', tripId);
         const tripSnap = await getDoc(tripRef);
         if (!tripSnap.exists()) {
             setStatus("Trip does not exist.");
@@ -68,7 +66,7 @@ const JoinTrip = () => {
         }
 
         // Add golfer to the golfers subcollection of the trip
-        const golferRef = doc(db, `golfTrips/${joinCode}/golfers`, golfer.uid);
+        const golferRef = doc(db, `golfTrips/${tripId}/golfers`, golfer.uid);
         await setDoc(golferRef, {
             golferName: golfer.displayName || '',
             golferRef: golfer.uid
@@ -81,7 +79,7 @@ const JoinTrip = () => {
     } finally {
         setLoading(false);
     }
-};
+  };
 
   return (
     <div>
@@ -93,8 +91,8 @@ const JoinTrip = () => {
       )}
       <input
         type="text"
-        value={joinCode}
-        onChange={(e) => setJoinCode(e.target.value)}
+        value={tripId}
+        onChange={(e) => setTripId(e.target.value)}
         placeholder="Enter Golf Trip ID"
       />
       <button onClick={handleJoinTrip} disabled={loading}>

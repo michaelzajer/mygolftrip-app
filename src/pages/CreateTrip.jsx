@@ -25,22 +25,24 @@ const CreateTrip = () => {
     const [step, setStep] = useState(1);
     const [tripId, setTripId] = useState(null); // Add tripId to state
 
-
-
     const auth = getAuth();
 
     useEffect(() => {
         onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
         });
+    }, [auth]);
 
-        const fetchGolfers = async () => {
-            const querySnapshot = await getDocs(collection(db, 'golfers'));
-            setGolfers(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        };
+    const fetchTripGolfers = async () => {
+        if (tripId) {
+            const tripGolfersSnapshot = await getDocs(collection(db, `golfTrips/${tripId}/golfers`));
+            setGolfers(tripGolfersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        }
+    };
 
-        fetchGolfers();
-    }, []);
+    useEffect(() => {
+        fetchTripGolfers();
+    }, [tripId]);
 
     const generateJoinCode = () => {
         // Simple random string generator
@@ -64,6 +66,16 @@ const CreateTrip = () => {
                 joinCode
             });
             setTripId(tripRef.id); // Set the tripId for the newly created trip
+
+            // Automatically add the creator to the golfTrips/golfers subcollection
+            const creatorRef = doc(db, `golfTrips/${tripRef.id}/golfers`, user.uid);
+            await setDoc(creatorRef, {
+                golferName: user.displayName,
+                golferRef: user.uid,
+                dailyHcp: 0,
+                score: 0
+            });
+
             setStep(2); // Move to the next step
         } catch (error) {
             console.error("Error creating trip: ", error);
@@ -71,21 +83,40 @@ const CreateTrip = () => {
         }
     };
 
-    const handleGolferSelectionChange = (event) => {
-        const selectedOptions = Array.from(event.target.selectedOptions, option => option.value);
-        setSelectedGolfers(selectedOptions);
+    const handleGolferCheckboxChange = (golferId) => {
+        if (selectedGolfers.includes(golferId)) {
+            setSelectedGolfers(selectedGolfers.filter(id => id !== golferId));
+        } else {
+            setSelectedGolfers([...selectedGolfers, golferId]);
+        }
     };
 
     const handleAddGolfersToTrip = async () => {
-        const tripRef = doc(db, 'golfTrips', tripId);
-        const golferPromises = selectedGolfers.map(golferId => {
+        if (!tripId) {
+            console.error("Trip ID is not set");
+            return;
+        }
+    
+        // Ensure that all selected golfer IDs have corresponding golfer data
+        const validSelectedGolfers = selectedGolfers.filter(golferId =>
+            golfers.some(golfer => golfer.id === golferId)
+        );
+    
+        const golferPromises = validSelectedGolfers.map(golferId => {
+            // Ensure the golfer's name is defined
+            const golfer = golfers.find(g => g.id === golferId);
+            if (!golfer || !golfer.golferName) {
+                console.error(`Golfer data is missing or golferName is undefined for ID: ${golferId}`);
+                return Promise.resolve(); // Resolve the promise immediately to avoid blocking other operations
+            }
+    
             const golferRef = doc(db, `golfTrips/${tripId}/golfers`, golferId);
             return setDoc(golferRef, {
-                golferName: golfers.find(g => g.id === golferId).name,
+                golferName: golfer.golferName,
                 golferRef: golferId
             });
         });
-
+    
         try {
             await Promise.all(golferPromises);
             setStep(3); // Proceed to next step after adding golfers
@@ -109,63 +140,61 @@ const CreateTrip = () => {
         setGroups(updatedGroups);
     };
 
-    const handleGroupGolferSelection = (groupIndex, selectedGolferIds) => {
-        const updatedGroups = groups.map((group, idx) => {
+    const handleGroupGolferSelection = (groupIndex, golferId) => {
+        setGroups(groups.map((group, idx) => {
             if (idx === groupIndex) {
-                return { ...group, golfers: selectedGolferIds };
+                const newGolfers = group.golfers.includes(golferId)
+                    ? group.golfers.filter(id => id !== golferId)
+                    : [...group.golfers, golferId];
+                return { ...group, golfers: newGolfers };
             }
             return group;
-        });
-        setGroups(updatedGroups);
+        }));
     };
-
+    
     const handleCreateGroups = async () => {
+        if (!tripId) {
+            console.error("Trip ID is not set");
+            return;
+        }
+    
         const tripGroupsRef = collection(db, `golfTrips/${tripId}/groups`);
     
-        const groupPromises = groups.map(async (group) => {
-            // Check if a group with the same name and date already exists
-            const q = query(tripGroupsRef, where("groupName", "==", group.groupName), where("groupDate", "==", group.groupDate));
-            const querySnapshot = await getDocs(q);
-    
+        for (const group of groups) {
             let groupRef;
-            if (querySnapshot.empty) {
-                // If no such group exists, create a new one
-                groupRef = await addDoc(tripGroupsRef, {
-                    groupName: group.groupName,
-                    groupDate: group.groupDate
-                });
+            if (group.id && !group.id.startsWith('temp-')) {
+                // Existing group, update it
+                groupRef = doc(tripGroupsRef, group.id);
             } else {
-                // If such a group exists, update it
-                const existingGroupDoc = querySnapshot.docs[0];
-                groupRef = doc(db, `golfTrips/${tripId}/groups`, existingGroupDoc.id);
-                await updateDoc(groupRef, {
+                // New group, create it
+                const newGroupRef = await addDoc(tripGroupsRef, {
                     groupName: group.groupName,
                     groupDate: group.groupDate
                 });
+                group.id = newGroupRef.id;
+                groupRef = newGroupRef;
             }
     
-            // Add or update golfers in the group
-            const golferPromises = group.golfers.map(golferId => {
-                const golferGroupRef = doc(db, `golfTrips/${tripId}/groups/${groupRef.id}/golfers`, golferId);
-                return setDoc(golferGroupRef, {
-                    golferName: golfers.find(g => g.id === golferId).name,
+            for (const golferId of group.golfers) {
+                // Find the golfer's name in the array
+                const golfer = golfers.find(g => g.id === golferId);
+                if (!golfer) {
+                    console.error(`Golfer not found with ID: ${golferId}`);
+                    continue; // Skip this golfer and continue with the next one
+                }
+    
+                const golferRef = doc(db, `golfTrips/${tripId}/groups/${groupRef.id}/golfers`, golferId);
+                await setDoc(golferRef, {
+                    golferName: golfer.golferName, // Use golferName from the golfer object
                     golferRef: golferId,
                     dailyHcp: 0,
                     score: 0
                 });
-            });
-    
-            return Promise.all(golferPromises);
-        });
-    
-        try {
-            await Promise.all(groupPromises);
-            alert('Groups created/updated successfully!');
-            setStep(4); // Proceed to the trip summary step
-        } catch (error) {
-            console.error("Error creating/updating groups: ", error);
-            alert("There was an error creating/updating the groups.");
+            }
         }
+    
+        alert('Groups created/updated successfully!');
+        setStep(4); // Proceed to the trip summary step
     };
 
     return (
@@ -237,27 +266,30 @@ const CreateTrip = () => {
                             <label className="block text-grey-700 text-sm font-bold mb-2">
                                 Select Golfers
                             </label>
-                            <select
-                                multiple
-                                className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
-                                value={selectedGolfers}
-                                onChange={handleGolferSelectionChange}
-                            >
+                            <div>
                                 {golfers.map(golfer => (
-                                    <option key={golfer.id} value={golfer.id}>{golfer.name}</option>
+                                    <div key={golfer.id}>
+                                        <input
+                                            type="checkbox"
+                                            id={`golfer-${golfer.id}`}
+                                            checked={selectedGolfers.includes(golfer.id)}
+                                            onChange={() => handleGolferCheckboxChange(golfer.id)}
+                                        />
+                                        <label htmlFor={`golfer-${golfer.id}`}>{golfer.golferName}</label>
+                                    </div>
                                 ))}
-                            </select>
+                            </div>
                         </div>
                         <button
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                            onClick={() => handleAddGolfersToTrip(tripId)}
+                            onClick={() => handleAddGolfersToTrip()}
                         >
                             Add Golfers
                         </button>
                     </div>
                 )}
     
-    {step === 3 && (
+                {step === 3 && (
                 <div>
                     <h2 className="text-2xl font-bold mb-6 text-blue-500">Create/Edit Groups</h2>
                     {groups.map((group, index) => (
@@ -284,17 +316,22 @@ const CreateTrip = () => {
                             <label className="block text-grey-700 text-sm font-bold mb-2 mt-3">
                                 Select Golfers
                             </label>
-                            <select
-                                multiple
-                                value={group.golfers}
-                                onChange={(e) => handleGroupGolferSelection(index, Array.from(e.target.selectedOptions, option => option.value))}
-                                className="shadow border rounded w-full py-2 px-3 text-grey-700 leading-tight"
-                            >
+                            <div>
                                 {selectedGolfers.map(golferId => {
                                     const golfer = golfers.find(g => g.id === golferId);
-                                    return <option key={golferId} value={golferId}>{golfer.name}</option>;
+                                    return (
+                                        <div key={golferId}>
+                                            <input
+                                                type="checkbox"
+                                                id={`group-${index}-golfer-${golferId}`}
+                                                checked={group.golfers.includes(golferId)}
+                                                onChange={() => handleGroupGolferSelection(index, golferId)}
+                                            />
+                                            <label htmlFor={`group-${index}-golfer-${golferId}`}>{golfer.golferName}</label>
+                                        </div>
+                                    );
                                 })}
-                            </select>
+                            </div>
                         </div>
                     ))}
                     <button 
@@ -340,7 +377,7 @@ const CreateTrip = () => {
                                                 <ul>
                                                     {group.golfers.map(golferId => {
                                                         const golfer = golfers.find(g => g.id === golferId);
-                                                        return <li key={golferId}>{golfer.name}</li>;
+                                                        return <li key={golferId}>{golfer.golferName}</li>;
                                                     })}
                                                 </ul>
                                             </div>

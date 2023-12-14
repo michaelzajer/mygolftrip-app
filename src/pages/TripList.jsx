@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, doc, deleteDoc, setDoc } from 'firebase/firestore';
+import { getAuth } from "firebase/auth";
+import { collection, getDocs, doc, deleteDoc, setDoc, query, where } from 'firebase/firestore';
 
 const TripList = () => {
   const [trips, setTrips] = useState([]);
@@ -18,7 +19,13 @@ const TripList = () => {
     };
 
     const fetchTrips = async () => {
-      const tripsSnapshot = await getDocs(collection(db, 'golfTrips'));
+      const auth = getAuth();
+      const currentUserId = auth.currentUser.uid;
+
+      const tripsQuery = query(collection(db, 'golfTrips'), where('creatorId', '==', currentUserId));
+      const tripsSnapshot = await getDocs(tripsQuery);
+
+     // const tripsSnapshot = await getDocs(collection(db, 'golfTrips'));
       const tripsData = await Promise.all(
         tripsSnapshot.docs.map(async (tripDoc) => {
           const groupsSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups`));

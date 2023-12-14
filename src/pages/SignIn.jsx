@@ -5,7 +5,7 @@ import OAuth from "../components/OAuth";
 import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
 import { db } from '../firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,16 +21,33 @@ export default function SignIn() {
     try {
       const auth = getAuth();
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  
       if (userCredential.user) {
-        // Check if the user is part of any golf trips
-        const golferTripsQuery = query(collection(db, 'golfTrips'), where('golfers', 'array-contains', userCredential.user.uid));
-        const querySnapshot = await getDocs(golferTripsQuery);
-        if (querySnapshot.empty) {
-          // If the user is not part of any trips, redirect to join-trip
-          navigate('/join-trip');
-        } else {
-          // If the user is part of trips, redirect to mytrips
-          navigate('/mytrips');
+        const golferRef = doc(db, 'golfers', userCredential.user.uid);
+        const golferSnap = await getDoc(golferRef);
+  
+        console.log('Golfer id', userCredential.user.uid);
+        if (golferSnap.exists()) {
+          const golferData = golferSnap.data();
+          if (!golferData.golfLinkNo || golferData.golfLinkNo === 0 || !golferData.handicapGA || golferData.handicapGA === 0) {
+            toast.warn("Please update your Golf Link number and GA Handicap in your profile.");
+          }
+  
+          const tripsRef = collection(db, 'golfTrips');
+          const tripsSnapshot = await getDocs(tripsRef);
+          let isPartOfTrip = false;
+  
+          for (const tripDoc of tripsSnapshot.docs) {
+            const golfersRef = collection(db, `golfTrips/${tripDoc.id}/golfers`);
+            const golferInTripSnap = await getDocs(golfersRef);
+  
+            if (golferInTripSnap.docs.some(doc => doc.id === userCredential.user.uid)) {
+              isPartOfTrip = true;
+              break;
+            }
+          }
+  
+          navigate(isPartOfTrip ? '/mytrips' : '/join-trip');
         }
       }
     } catch (error) {
@@ -43,22 +60,6 @@ export default function SignIn() {
       ...prevState, 
       [e.target.id]: e.target.value,
     }));
-  }
-  async function onSubmit(e){
-    e.preventDefault()
-    try {
-      const auth = getAuth()
-      const userCredential = await 
-      signInWithEmailAndPassword(
-        auth, 
-        email, 
-        password)
-        if(userCredential.user){
-          navigate("/mytrips")
-        }
-    } catch (error) {
-      toast.error("Bad user credentials")
-    }
   }
 
   return (

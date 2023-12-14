@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { doc, getDoc, updateDoc, collection, getDocs, setDoc, deleteDoc, addDoc } from 'firebase/firestore';
+import { getAuth } from "firebase/auth";
+import { doc, getDoc, updateDoc, collection, getDocs, setDoc, deleteDoc, addDoc, query, where } from 'firebase/firestore';
 
 const EditTrip = ({ tripId }) => {
     const [tripDetails, setTripDetails] = useState({ golfTripName: '', tripStartDate: '', tripEndDate: '' });
@@ -12,7 +13,10 @@ const EditTrip = ({ tripId }) => {
 
     useEffect(() => {
         const fetchAllTrips = async () => {
-            const querySnapshot = await getDocs(collection(db, 'golfTrips'));
+            const auth = getAuth();
+            const currentUserId = auth.currentUser.uid;
+            const tripsQuery = query(collection(db, 'golfTrips'), where('creatorId', '==', currentUserId));
+            const querySnapshot = await getDocs(tripsQuery);
             setAllTrips(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
         };
     

@@ -11,6 +11,7 @@ import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { LiaGolfBallSolid } from 'react-icons/lia'
 import { Link } from "react-router-dom";
+import Switch from "react-switch";
 
 export default function Profile() {
   const auth = getAuth();
@@ -25,6 +26,9 @@ export default function Profile() {
     handicapGA: '',
   });
   const { name, email, golfLinkNo, handicapGA } = formData
+  const [isAdmin, setIsAdmin] = useState(false); // State for admin status
+  const [isAdminToggleChecked, setIsAdminToggleChecked] = useState(false);
+
   function onLogout(){
     auth.signOut();
     navigate('/');
@@ -35,29 +39,7 @@ export default function Profile() {
       [e.target.id]: e.target.value,
     }));
   } 
-  async function onSubmit(){
-    try {
-      if(auth.currentUser.displayName !== name){
-        //update display name in firebase authentication
-        await updateProfile(auth.currentUser, {
-          displayName: name,
-        });
-        
-        //update name in the firestore
-          const docRef = doc(db, "golfers", auth.currentUser.uid)
-            await updateDoc(docRef, {
-              name: name });
-      }
-        //set golfLinkNo in the firestore
-          const golfLink = doc(db, 'golfers', auth.currentUser.uid);
-              await setDoc(golfLink, {
-                golfLinkNo: golfLinkNo, handicapGA: handicapGA }, {merge: true });
 
-        toast.success('Profile Details Updated')
-    } catch (error) {
-        toast.error("Could not update the profile details")
-    }
-  }
   useEffect(() => {
     const fetchUserProfile = async () => {
       setLoading(true);
@@ -71,19 +53,63 @@ export default function Profile() {
             golfLinkNo: docSnap.data().golfLinkNo || '',
             handicapGA: docSnap.data().handicapGA || '',
           }));
+          setIsAdmin(docSnap.data().isAdmin || false); // Set admin status
         } else {
-          // Handle the case where the document does not exist.
           console.log('No such document!');
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
-        // Handle any errors.
       }
       setLoading(false);
     };
   
     fetchUserProfile();
-  }, [auth.currentUser.uid]); // Add additional dependencies as needed.
+  }, [auth.currentUser.uid]);
+
+  useEffect(() => {
+    // Fetch and set the isAdmin flag when the component mounts
+    const fetchIsAdminFlag = async () => {
+      const golferRef = doc(db, 'golfers', auth.currentUser.uid);
+      const golferSnap = await getDoc(golferRef);
+      if (golferSnap.exists() && golferSnap.data().isAdmin) {
+        setIsAdminToggleChecked(golferSnap.data().isAdmin);
+      }
+    };
+    fetchIsAdminFlag();
+  }, [auth.currentUser.uid]);
+
+  const handleAdminToggleChange = (checked) => {
+    setIsAdminToggleChecked(checked);
+    // Update isAdmin field in Firestore
+    const golferRef = doc(db, 'golfers', auth.currentUser.uid);
+    updateDoc(golferRef, { isAdmin: checked });
+  };
+
+  async function saveProfileChanges() {
+    try {
+      // Update golfer's profile in Firestore
+      const golferRef = doc(db, 'golfers', auth.currentUser.uid);
+      await updateDoc(golferRef, {
+        golfLinkNo: golfLinkNo,
+        handicapGA: handicapGA,
+      });
+      toast.success('Profile details updated');
+    } catch (error) {
+      toast.error('Could not update profile details');
+    }
+  }
+
+  const handleAdminChange = async (checked) => {
+    setIsAdmin(checked);
+    try {
+      const golferRef = doc(db, 'golfers', auth.currentUser.uid);
+      await updateDoc(golferRef, { isAdmin: checked });
+      toast.success('Admin status updated');
+    } catch (error) {
+      console.error('Error updating admin status:', error);
+      toast.error('Failed to update admin status');
+    }
+  };
 
 
   return (
@@ -97,7 +123,7 @@ export default function Profile() {
             type="text" 
             id="name"  
             value={name} 
-            disabled={!changeDetail}
+            onBlur={saveProfileChanges}
             onChange={onChange}
             className={`mb-6 w-full px-4 py-2 text-m text-blue-100 bg-green-100 border border-primary-100 rounded transition ease-in-out"${changeDetail && "focus:text-blue-100 text-blue-100 bg-pink-100 focus:bg-yellow-100"}`} />
             {/* Email input */}
@@ -110,7 +136,7 @@ export default function Profile() {
               type="text" 
               id="golfLinkNo"  
               value={golfLinkNo} 
-              disabled={!changeDetail}
+              onBlur={saveProfileChanges}
               onChange={onChange}
               placeholder="GolfLinkNo"
               className={`mb-6 w-full px-4 py-2 text-m text-blue-100 bg-green-100 border border-primary-100 rounded transition ease-in-out"${changeDetail && "focus:text-blue-100 text-blue-100 bg-pink-100 focus:bg-yellow-100"}`} 
@@ -120,29 +146,36 @@ export default function Profile() {
               type="text" 
               id="handicapGA"  
               value={handicapGA} 
-              disabled={!changeDetail}
+              onBlur={saveProfileChanges}
               onChange={onChange}
               placeholder="GA handicap"
               className={`mb-6 w-full px-4 py-2 text-m text-blue-100 bg-green-100 border border-primary-100 rounded transition ease-in-out"${changeDetail && "focus:text-blue-100 text-blue-100 bg-pink-100 focus:bg-yellow-100"}`} 
             />
             <div 
               className="flex justify-between whitespace-nowrap text-m sm:text-m mb-6">
-              <p className="flex items-center text-green-100 ">
-                <span
-                onClick={() => {
-                  changeDetail && onSubmit()
-                  setChangeDetail((prevState) => !prevState);
-                }}
-                className="text-accent-100 hover:text-pink-100 transition ease-in-out duration-200 ml-1 cursor-pointer">
-                  {changeDetail ? "Apply Change" : "Edit Details"}
-                  </span>
-              </p>
               <p 
                 onClick={onLogout}
                 className="text-accent-100 text-green-100 hover:text-pink-100 transition duration-200 ease-in-out cursor-pointer text-m">
                 Sign out
               </p>
             </div> 
+
+            <div>
+        <label className='text-green-100' htmlFor="admin-toggle">Admin:</label>
+        <Switch
+          id="admin-toggle"
+          checked={isAdminToggleChecked}
+          onChange={handleAdminToggleChange}
+        />
+         {isAdminToggleChecked ? (
+          <Link to="/admin" className="ml-4 text-green-100">
+            Go to Admin Page
+          </Link>
+        ) : (
+          <p>Do you want to create a golf trip to share with friends?</p>
+        )}
+      </div>
+            <div className="my-4">
             <button 
             type="submit" 
               className="w-full  uppercase px-7 py-3 text-m font-medium rounded shadow-md bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 border border-yellow-100 text-green-100
@@ -153,6 +186,7 @@ export default function Profile() {
                   Click to go to your Golf Trip
                 </Link>
             </button>
+            </div>
           </form>
         </div>
       </section>
