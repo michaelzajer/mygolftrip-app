@@ -1,3 +1,8 @@
+/*
+This page is called from ./pages/Admin.jsx it lists the trips that have been created.
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { getAuth } from "firebase/auth";

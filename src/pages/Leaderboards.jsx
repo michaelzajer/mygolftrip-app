@@ -1,10 +1,17 @@
-// LeaderboardsIndex.jsx
+/*
+This is the ./pages/Leaderboards.jsx page it lists the leaderboards for the golfer.
+./LeaderboardGroups.jsx displays the leaderboard by groups
+./LeadeerboardDate.jsx displays the leaderboard by Date
+./LeaderboardOverall.jsx displays the overall leaderboard 
+*/
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase'; // Adjust this path to point to your firebase configuration
+import { db } from '../firebase'; 
 import { collection, getDocs} from 'firebase/firestore';
 import LeaderBoardGroups from './LeaderboardGroups';
 import LeaderboardDate from './LeaderboardDate';
 import LeaderboardOverall from './LeaderboardOverall';
+import LeaderboardPairsByDay from './LeaderboardDayPair';
+import LeaderBoardTeam from './LeaderBoardTeam';
 
 const Leaderboards = () => {
 const [trips, setTrips] = useState([]);
@@ -36,6 +43,10 @@ const [trips, setTrips] = useState([]);
         return <LeaderboardDate />;
         case 'overall':
             return <LeaderboardOverall />;
+        case 'pairs':
+            return <LeaderboardPairsByDay />;
+        case 'teams':
+          return <LeaderBoardTeam />;
       default:
         return null; // or a welcome message, or anything you want as the default state
     }
@@ -70,13 +81,25 @@ const [trips, setTrips] = useState([]);
             onClick={() => setActiveLeaderboard('date')}
             className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white rounded border border-yellow-100 py-1 px-2 font-semibold"
           >
-            Date
+            Daily
           </button>
           <button
             onClick={() => setActiveLeaderboard('groups')}
             className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white rounded border border-yellow-100 py-1 px-2 font-semibold"
           >
             Group
+          </button>
+          <button
+            onClick={() => setActiveLeaderboard('pairs')}
+            className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white rounded border border-yellow-100 py-1 px-2 font-semibold"
+          >
+            Pairs
+          </button>
+          <button
+            onClick={() => setActiveLeaderboard('teams')}
+            className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white rounded border border-yellow-100 py-1 px-2 font-semibold"
+          >
+            Team
           </button>
           {/* Add additional leaderboard links/buttons here */}
         </div>

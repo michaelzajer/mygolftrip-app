@@ -1,3 +1,7 @@
+/*
+This page is called from ./pages/Leaderboards.jsx it displays the leaderboard by groups
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';

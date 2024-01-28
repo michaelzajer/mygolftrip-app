@@ -1,3 +1,8 @@
+/*
+This page is called from ./pages/SendInvite.jsx it sends an invite for a trip.
+
+*/
+
 import { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { getAuth } from "firebase/auth";

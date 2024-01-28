@@ -21,12 +21,31 @@ module.exports = {
         bground: {
           '100': '#f6fbfa',
         },
+        teama: {
+          '100': '#4c527c',
+          '200': '#e16cab',
+          '300': '#6bc3c0',
+        },
+        teamb: {
+          '100': '#2f7393',
+          '200': '#a5d1ea',
+          '300': '#e0c2ea',
+        },
         /*
         Consistency: Use your primary color for main elements like headers and buttons.
         Highlighting: Use accent colors for calls to action, links, or to highlight important information.
         Readability: Ensure good contrast, especially with text. Use background colors that are easy on the eyes.
         */
     },
+  },
+},
+animation: {
+  'flash': 'flash 1s infinite', // Define the custom flash animation
+},
+keyframes: {
+  flash: {
+    '0%, 100%': { color: '#ffd166' }, // Yellow color
+    '50%': { color: '#ef476f' },      // Pink color
   },
 },
 screens: {

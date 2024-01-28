@@ -1,3 +1,10 @@
+/*
+This page is called from ./pages/Admin.jsx it creates the golf course.
+
+It also links to ./pages/CreateHole.jsx
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, doc, setDoc, addDoc, getDocs } from 'firebase/firestore';

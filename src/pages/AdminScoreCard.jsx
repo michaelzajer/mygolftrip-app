@@ -1,3 +1,8 @@
+/*
+This page is called from ./pages/Admin.jsx it creates the scorecard for a course
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs, doc, writeBatch } from 'firebase/firestore';

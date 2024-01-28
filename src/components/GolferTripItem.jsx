@@ -1,3 +1,7 @@
+/*
+This is the GolferTripItem that is called from ../pages/MyTrips.jsx
+*/
+
 import React, { useState, useEffect } from 'react';
 import { getDocs, collection, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -24,11 +28,11 @@ const formatDate = (dateString) => {
 const GolferTripItem = (props) => {
   const [trips, setTrips] = useState([]);
   const auth = getAuth();
-  const golferId = auth.currentUser?.uid; // Get the current golfer's ID
+  const golferId = auth.currentUser?.uid;
 
   useEffect(() => {
     const fetchTrips = async () => {
-      if (!golferId) return; // Ensure there is a logged-in golfer
+      if (!golferId) return; 
 
       const tripsSnapshot = await getDocs(collection(db, 'golfTrips'));
       const tripsData = [];
@@ -70,8 +74,11 @@ const GolferTripItem = (props) => {
           </p>
           <div className="flex justify-center space-x-1 mt-2">
             {trip.dateRange.map((date, index) => (
-              <button key={date} className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white text-xs py-1 px-1 rounded border border-pink-100 flex flex-col items-center"
-              onClick={() => props.onDateSelect(date, trip.id)}>
+              <button key={date} 
+                  className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 
+                    text-white text-xs py-1 px-1 rounded border border-pink-100 
+                      flex flex-col items-center"
+                  onClick={() => props.onDateSelect(date, trip.id)}>
                 <span className="font-semibold">{`Day ${index + 1}`}</span>
                 <span>{date}</span>
               </button>

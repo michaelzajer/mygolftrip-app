@@ -1,3 +1,8 @@
+/*
+This is called from the ../pages/DateDetails.jsx
+./components/ViewRound.jsx can be called to show the golfers round.
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, doc, getDocs, updateDoc, getDoc } from 'firebase/firestore';

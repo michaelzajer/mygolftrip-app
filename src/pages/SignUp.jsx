@@ -1,3 +1,8 @@
+/*
+This page is the ./pages/SignUp.jsx page.  It calls the ../components/OAuth.jsx component.
+
+*/
+
 import { useState } from "react";
 import {AiFillEyeInvisible, AiFillEye} from "react-icons/ai"
 import { Link } from "react-router-dom";

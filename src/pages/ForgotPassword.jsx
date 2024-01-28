@@ -1,3 +1,10 @@
+/*
+This page is called from ./pages/SignIn.jsx it is forgot password function.
+
+It also uses ../components/OAuth.jsx
+
+*/
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import OAuth from "../components/OAuth";

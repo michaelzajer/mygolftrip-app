@@ -1,3 +1,8 @@
+/*
+This is the Private Route controller for the navigation in the header.
+
+*/
+
 import { Outlet, Navigate } from "react-router-dom";
 import { useAuthStatus } from "../hooks/useAuthStatus";
 import Spinner from "./Spinner";

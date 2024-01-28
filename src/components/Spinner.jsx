@@ -1,3 +1,7 @@
+/*
+This is called from ./components/PrivateRoute.jsx
+
+*/
 import spinner from "../assets/spinner.svg"
 export default function Spinner() {
   return (

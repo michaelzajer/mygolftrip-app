@@ -1,3 +1,8 @@
+/*
+This page is the .pages/SignIn.jsx page it signs the golfer in.
+It calls ../components/OAuth.jsx to do the authentication
+*/
+
 import { useState } from "react";
 import {AiFillEyeInvisible, AiFillEye} from "react-icons/ai"
 import { Link, useNavigate } from "react-router-dom";

@@ -1,6 +1,9 @@
+/*
+This is the GolferItem component that is called from ../pages/MyTrips.jsx
+*/
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase'; // Ensure you import your actual firebase config
+import { db } from '../firebase';
 import { Link } from 'react-router-dom';
 
 const GolferItem = ({ golferRef }) => {
@@ -15,7 +18,7 @@ const GolferItem = ({ golferRef }) => {
         if (docSnap.exists()) {
           setGolfer(docSnap.data());
         } else {
-          // doc.data() will be undefined in this case
+       
           console.log('No such document!');
         }
       } catch (error) {
@@ -33,7 +36,7 @@ const GolferItem = ({ golferRef }) => {
   return (
     <div className="bg-blue-100 text-yellow-100 p-4 rounded-lg text-center">
       <h1 className="text-md font-bold text-center">{golfer.name}</h1>
-      {/* Wrap the label in a span and apply text color */}
+   
       <p className='text-md mt-2 text-center'>
         <span className="text-green-100">Golf Link No:</span> {golfer.golfLinkNo}
       </p>

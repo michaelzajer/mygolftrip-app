@@ -1,3 +1,10 @@
+/*
+This page is called from ./pages/Admin.jsx it creates a golf trip.
+
+./pages/EditTrip.jsx is called from here.
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
@@ -6,10 +13,7 @@ import {
     addDoc,
     getDocs,
     doc,
-    setDoc,
-    updateDoc,
-    where,
-    query
+    setDoc
 } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 

@@ -1,3 +1,17 @@
+/*
+This page is the main Admin page. This page calls
+
+./pages/CreateTrip.jsx
+./pages/CreateCourse.jsx
+./pages/CreateTeeBlock.js
+./pages/CreateHole.jsx
+./pages/TripList.jsx
+./pages/SendInvite.jsx
+./pages/AdminScoreCard.jsx
+./pages/AdminDailyHcp.jsx
+./pages/CreateTeam.jsx
+
+*/
 import { Link } from "react-router-dom";
 import { BsFillGearFill } from "react-icons/bs"; // Import Gear icon for settings
 
@@ -14,6 +28,9 @@ export default function Admin() {
         <AdminLink to="/admin/tripinvite" text="Send Golf Trip Invite" />
         <AdminLink to="/admin/scorecard" text="Admin Scorecard" />
         <AdminLink to="/admin/adddailyhcp" text="Admin Add Daily Hcp" />
+        <AdminLink to="/admin/createteam" text="Admin Create Team" />
+        <AdminLink to="/admin/editteam" text="Admin Edit Team" />
+        <AdminLink to="/admin/createdaypair" text="Admin Create Day/Pair" />
       </div>
     </div>
   );

@@ -1,3 +1,8 @@
+/*
+This page is called from ./pages/SendInvite.jsx it is the join trip url sent to a golfer
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';

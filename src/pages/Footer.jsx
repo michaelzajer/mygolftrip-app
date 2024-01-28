@@ -1,3 +1,8 @@
+/*
+This page is ./pages/Footer.jsx the footer for the site
+
+*/
+
 import React from 'react';
 
 function Footer({ co2Total }) {

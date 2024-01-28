@@ -1,6 +1,11 @@
+/*
+This page is called from ./pages/Admin.jsx it creates the tees for a course.
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, doc, setDoc, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 
 const CreateTeeBlock = () => {

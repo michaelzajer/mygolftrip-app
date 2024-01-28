@@ -1,3 +1,9 @@
+/*
+This page is called from 
+./pages/SignIn.jsx and
+./pages/SignUp.jsx
+*/
+
 import { GoogleAuthProvider, getAuth, signInWithPopup } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { FcGoogle } from "react-icons/fc";

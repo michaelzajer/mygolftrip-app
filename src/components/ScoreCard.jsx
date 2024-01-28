@@ -1,6 +1,11 @@
+/*
+This is called from the ../pages/DateDetails.jsx
+./components/ScoreCard.jsx can be called to show the golfers score card.
+*/
+
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, doc, getDocs, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, updateDoc, setDoc, where, query } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { Formik } from 'formik';
 
@@ -14,8 +19,6 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
   const [runningTotal, setRunningTotal] = useState(0); // New state for running total
   const [initialValues, setInitialValues] = useState({ score: '0' });
   const [dailyHcp, setDailyHcp] = useState(''); // Add state for daily handicap
-  const [isEditingHcp, setIsEditingHcp] = useState(false); // New state for edit mode
-  const [scorecardsLoaded, setScorecardsLoaded] = useState(false); // New state to track if scorecards have been loaded
   const [golferDetails, setGolferDetails] = useState({}); // State to store golfer details
   const [golferGaDetails, setGolferGaDetails] = useState({})
   const [stablefordPoints, setStablefordPoints] = useState(0);
@@ -126,7 +129,10 @@ const ScoreCard = ({ dGroupId, dGolferId, golfTripId, onClose }) => {
           const holeSnap = await getDoc(holeRef);
           if (holeSnap.exists()) {
             const holeData = holeSnap.data();
-            holesMap[holeData.holeNumber] = holeData;
+            holesMap[holeData.holeNumber] = {
+              ...holeData,
+              isCttp: holeData.isCttp || false // Add CTTP information
+            };
   
             // Add Stableford points if they exist for this hole
             if (scorecardData.stablefordPoints && scorecardData.stablefordPoints[holeData.holeNumber]) {
@@ -276,10 +282,42 @@ const fetchAndUpdateRunningTotals = async () => {
             golferName: golferDetails.golferName,
           };
           await setDoc(leaderboardRef, leaderboardUpdate, { merge: true });
-  
-        } catch (error) {
+
+          // After updating leaderboard, update the corresponding Pair
+          const dayRef = collection(db, `golfTrips/${golfTripId}/Days`);
+          const dayQuery = query(dayRef, where("date", "==", groupDate));
+          const daySnapshot = await getDocs(dayQuery);
+
+          if (!daySnapshot.empty) {
+            // Assume that there's only one Day document per date
+            const dayDoc = daySnapshot.docs[0];
+
+            const pairsRef = collection(db, `golfTrips/${golfTripId}/Days/${dayDoc.id}/Pairs`);
+            const pairsSnapshot = await getDocs(pairsRef);
+            pairsSnapshot.forEach(async (pairDoc) => {
+              const pairData = pairDoc.data();
+              const golferIndex = pairData.golfers.findIndex(g => g.id === dGolferId);
+              if (golferIndex !== -1) {
+                // Update the golfer's score within the Pairs document
+                const updatedGolfer = {
+                  ...pairData.golfers[golferIndex],
+                  totalPoints: newTotalPoints,
+                  totalScore: newTotalScore
+                };
+                const updatedGolfers = [
+                  ...pairData.golfers.slice(0, golferIndex),
+                  updatedGolfer,
+                  ...pairData.golfers.slice(golferIndex + 1)
+                ];
+                await updateDoc(doc(db, `golfTrips/${golfTripId}/Days/${dayDoc.id}/Pairs`, pairDoc.id), {
+                  golfers: updatedGolfers
+                });
+              }
+            });
+          }
+          } catch (error) {
           console.error(`Error saving score for hole ${holeNumber}: `, error);
-        }
+          }
           // Update the state to indicate the update
             setIsUpdated({ totalPoints: true, totalStrokes: true, totalSPoints: true });
 
@@ -410,7 +448,7 @@ const fetchAndUpdateRunningTotals = async () => {
               </div>
               <div>
                 <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holePar}</div>
-                <div className="flex-1/4 text-center text-1xl">Par</div>
+                <div className="flex-1/4 text-center text-1xl">Par {currentHoleDetails.isCttp && <span className="animate-flash"> CTTP</span>}</div>
               </div>
               <div>
                 <div className="flex-1/4 font-semibold text-center text-2xl">{currentHoleDetails.holeIndex}</div>

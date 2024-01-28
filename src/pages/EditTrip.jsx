@@ -1,3 +1,7 @@
+/*
+This page is called from ./pages/CreateTrip.jsx it edits a golf trip.
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { getAuth } from "firebase/auth";
@@ -108,6 +112,7 @@ const EditTrip = ({ tripId }) => {
     
             const golferRef = doc(db, `golfTrips/${selectedTripId}/golfers`, golfer.id);
             return setDoc(golferRef, { golferName: golfer.name, golferRef: golfer.id });
+
         });
     
         // Remove golfers no longer in the trip
@@ -143,7 +148,7 @@ const EditTrip = ({ tripId }) => {
             const groupGolfersRef = collection(db, `golfTrips/${selectedTripId}/groups/${group.id}/golfers`);
             const golfersToAdd = group.golfers;
             const golferPromises = golfersToAdd.map(golferId => {
-                const golferRef = doc(groupGolfersRef, golferId);
+            const golferRef = doc(groupGolfersRef, golferId);
                 return setDoc(golferRef, { 
                     golferName: golfers.find(g => g.id === golferId).name, 
                     golferRef: golferId, 

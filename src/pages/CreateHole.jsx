@@ -1,3 +1,10 @@
+/*
+This page is called from ./pages/Admin.jsx it creates the holes on a course.
+
+It is also called from ./pages/CreateTeeBlock.jsx
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, doc, setDoc, addDoc, getDocs, writeBatch } from 'firebase/firestore';
@@ -80,6 +87,7 @@ const CreateHole = () => {
         <div className="p-6 bg-bground-100 min-h-screen">
             <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow">
                 <h2 className="text-2xl font-bold mb-6 text-blue-100">Create Holes</h2>
+                <Link to="/admin/edithole">Edit Holes</Link>
                 {/* Golf Trip Selection */}
                 <div className="mb-4">
                     <select

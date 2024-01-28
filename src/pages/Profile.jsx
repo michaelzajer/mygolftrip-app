@@ -1,3 +1,7 @@
+/*
+This is the ./pages/Profile.jsx page.  It allows a golfer to change their profile and they can also set themselves as a trip admin.
+*/
+
 import { getAuth, updateProfile } from "firebase/auth";
 import { db } from "../firebase";
 import { 

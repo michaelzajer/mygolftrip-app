@@ -1,3 +1,7 @@
+/*
+This page is called from ./pages/Home.jsx as a link
+*/
+
 import React from 'react';
 
 export default function About() {

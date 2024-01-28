@@ -1,3 +1,10 @@
+/*
+This is called from the ../pages/Mytrips.jsx
+From this component there are 2 other components that can be called.
+./ScoreCard can be called to show the golfers scorecard for the selected round
+./ViewRound can be called to show the golfers round.
+*/
+
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';

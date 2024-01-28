@@ -1,3 +1,8 @@
+/*
+This is the ./components/Header.jsx for the site
+
+*/
+
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom"
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
