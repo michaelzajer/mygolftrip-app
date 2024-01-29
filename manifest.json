@@ -1,25 +1,48 @@
 {
-    "short_name": "MyGolfTrip",
-    "name": "My Golf Trip App",
-    "icons": [
-        {
-            "src": "/mygolftrip_logo2_144x144.png",
-            "type": "image/png",
-            "sizes": "144x144",
-            "purpose": "any"
-          },
-      {
-        "src": "logo512.png",
+"name": "My Golf Trip",
+"short_name": "mygolftrip",
+"start_url": "/",
+"display": "standalone",
+"description": "golf trip app",
+"lang": "english",
+"dir": "auto",
+"theme_color": "#000000",
+"background_color": "#000000",
+"orientation": "any",
+"icons": [
+    {
+        "src": "https://www.pwabuilder.com/assets/icons/icon_512.png",
+        "sizes": "512x512",
         "type": "image/png",
-        "sizes": "512x512"
-      }
-    ],
-    "start_url": "/",
-    "display": "standalone",
-    "theme_color": "#000000",
-    "background_color": "#ffffff",
-    "id": "mgta1",
-    "description": "This is a web app to create and run a golf trip",
-    "dir": "auto",
-    "lang": "en"
-  }
+        "purpose": "maskable"
+    },
+    {
+        "src": "https://www.pwabuilder.com/assets/icons/icon_192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any"
+    }
+],
+"screenshots": [
+    {
+        "src": "https://www.pwabuilder.com/assets/screenshots/screen1.png",
+        "sizes": "2880x1800",
+        "type": "image/png",
+        "description": "A screenshot of the home page"
+    }
+],
+"related_applications": [
+    {
+        "platform":"windows",
+        "url": " The URL to your app in that app store"
+    }
+],
+"prefer_related_applications": false,
+"shortcuts": [
+    {
+        "name":"goltripapp",
+        "url":"/",
+        "description":"A description of the functionality of this shortcut"
+    }
+]
+}
