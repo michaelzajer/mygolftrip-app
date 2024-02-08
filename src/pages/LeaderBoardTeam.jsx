@@ -61,31 +61,26 @@ const LeaderboardTeam = () => {
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold">Team Leaderboard</h2>
+    <div className="container mx-auto max-w-6xl">
       {dailyWinners.map((day, index) => (
-        <div key={index} className="my-4 p-4 shadow rounded">
-          <h3 className="text-lg font-semibold">Leaderboard for Day {day.dayNo} - {day.date}</h3>
-          <table className="min-w-full mt-2">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Team</th>
-                <th>Total Points</th>
-                <th>Prize Money</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div key={index} className="mb-1 bg-bground-100 shadow overflow-hidden rounded-lg">
+          <h3 className="text-sm font-semibold px-2 text-pink-100">Day {day.dayNo} - {day.date}</h3>
+          <div className="min-w-full leading-normal">
+            <div className="grid grid-cols-5 gap-4 px-5 py-3  bg-blue-100 text-yellow-100 text-xs font-semibold uppercase tracking-wider">
+                <p>Rank</p>
+                <p>Team</p>
+                <p>Total Points</p>
+                <p>Prize Money</p>
+            </div>
               {day.teams.map((team, teamIndex) => (
-                <tr key={teamIndex}>
-                  <td>{teamIndex + 1}</td>
-                  <td>{team.teamName}</td>
-                  <td>{team.totalPoints}</td>
-                  <td>{teamIndex === 0 ? team.prizeMoney : '$0'}</td>
-                </tr>
+                <div key={teamIndex} className="grid grid-cols-5 gap-4 bg-white px-5 py-5 border-b border-gray-200 text-sm">
+                  <p>{teamIndex + 1}</p>
+                  <p>{team.teamName}</p>
+                  <p>{team.totalPoints}</p>
+                  <p>{teamIndex === 0 ? team.prizeMoney : '$0'}</p>
+                </div>
               ))}
-            </tbody>
-          </table>
+          </div>
         </div>
       ))}
     </div>

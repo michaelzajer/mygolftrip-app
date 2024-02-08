@@ -1,210 +1,145 @@
-/* 
-MyTrips landing page.
-The ../components/GolferItem is called to show the Golfers name, handicap, ga details and a link to update their profile.
-The ../components/GolferTripItem to show the trips that the golfer is registered in.
-The ../components/DateDetails takes the selected date of the trip and displays the groups that the golfer is in on the right hand render   
-*/
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
+import { getAuth } from 'firebase/auth';
+import moment from 'moment';
+import GolferProfile from '../components/GolferProfile';
+import GolferTeam from '../components/GolferTeam';
+import ScoreCardDisplay from '../components/ScoreCardDisplay';
 import { db } from '../firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
-import { getAuth } from "firebase/auth";
-import GolferItem from "../components/GolferItem";
-import GolferTripItem from "../components/GolferTripItem";
-import DateDetails from '../components/DateDetails';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { useGolferTripsAndTeams } from '../hooks/useGoflerTripsAndTeams';
 
 const MyTrips = () => {
-  const [selectedDateInfo, setSelectedDateInfo] = useState({ date: null, golfTripId: null });
-  const [myTrips, setMyTrips] = useState([]);
-  const [showLeftComponent, setShowLeftComponent] = useState(true); // New state for sidebar visibility
-  const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(true);
+    const auth = getAuth();
+    const golferId = auth.currentUser?.uid;
+    const { golferDetails, trips, isLoading } = useGolferTripsAndTeams(golferId);
+    const [selectedTripId, setSelectedTripId] = useState(null);
+    const [scorecardData, setScorecardData] = useState(null);
+    const [selectedGroupId, setSelectedGroupId] = useState(null);
+    const [selectedScorecardId, setSelectedScorecardId] = useState(null);
+    const [isScorecardVisible, setIsScorecardVisible] = useState(false);
 
-  const auth = getAuth();
- 
-  const golferId = auth.currentUser?.uid;
+     // Helper function to generate date range buttons
+    const generateDateButtons = (startDate, endDate, tripId) => {
+      const start = moment(startDate);
+      const end = moment(endDate);
+      let dates = [];
 
- 
-  useEffect(() => {
-    const fetchMyTrips = async () => {
-      if (!golferId) {
-        return;
+      while (start.diff(end) <= 0) {
+          dates.push(start.clone());
+          start.add(1, 'days');
       }
-  
-      const myTripsData = [];
-      const tripsSnapshot = await getDocs(collection(db, "golfTrips"));
-  
-      for (const tripDoc of tripsSnapshot.docs) {
-        const golferRef = doc(db, "golfTrips", tripDoc.id, "golfers", golferId);
-        const golferSnap = await getDoc(golferRef);
-  
-        if (golferSnap.exists()) {
-          const groupsSnapshot = await getDocs(collection(db, `golfTrips/${tripDoc.id}/groups`));
-          const groupsData = groupsSnapshot.docs.map(groupDoc => ({
-            ...groupDoc.data(),
-            id: groupDoc.id
-          }));
-  
-          myTripsData.push({
-            ...tripDoc.data(),
-            id: tripDoc.id,
-            groups: groupsData,
-          });
-        }
-      }
-  
-      myTripsData.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-      setMyTrips(myTripsData);
-  
-      // Inside fetchMyTrips, after you have fetched the trips...
-      if (myTripsData.length > 0) {
-        const firstTripId = myTripsData[0].id;
-        await fetchTeams(firstTripId);
-      }
+
+        return (
+            <div className="flex justify-center space-x-1 mt-2">
+                {dates.map((date, index) => (
+                    <button
+                        key={date.format('YYYY-MM-DD')}
+                        className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 
+                        text-white text-xs py-1 px-1 rounded border border-pink-100 
+                        flex flex-col items-center"
+                        onClick={() => handleDateClick(date.format('YYYY-MM-DD'), tripId)}
+                    >
+                        <span className="font-semibold">{`Day ${index + 1}`}</span>
+                        {date.format('ddd, DD - MM')}
+                    </button>
+                ))}
+            </div>
+        );
     };
-  
-    fetchMyTrips();
-  }, [golferId]);
 
-  const fetchTeams = async (tripId) => {
-    setLoading(true);
-    try {
-      // Get the snapshot of the Teams collection within a specific golf trip
-      const teamsSnapshot = await getDocs(collection(db, `golfTrips/${tripId}/Teams`));
-      let teamsData = [];
+    async function fetchScorecardDataForDate(date, golferId, tripId) {
+      const groupRef = collection(db, `golfTrips/${tripId}/groups`);
+      const q = query(groupRef, where("groupDate", "==", date));
+      let scorecardsDataWithGroupIds = [];
   
-      // Loop through each team document
-      for (const teamDoc of teamsSnapshot.docs) {
-        // Extract team data
-        const teamData = { ...teamDoc.data(), id: teamDoc.id, members: [] };
-  
-        // Check if teamMembers is an array and proceed
-        if (Array.isArray(teamData.teamMembers)) {
-          // Resolve all member document references concurrently
-          const memberDocsPromises = teamData.teamMembers.map(memberRef => {
-            // No need to convert, memberRef is already a DocumentReference
-            return getDoc(memberRef);
-          });
-  
-          // Wait for all member documents to be fetched
-          const memberDocs = await Promise.all(memberDocsPromises);
-          
-          // Filter out any non-existent documents and extract data
-          const memberDetails = memberDocs
-            .filter(docSnapshot => docSnapshot.exists())
-            .map(docSnapshot => ({
-              id: docSnapshot.id,
-              ...docSnapshot.data()
-            }));
-  
-          // Add the member details to the teamData object
-          teamData.members = memberDetails;
-        }
-  
-        // Add the complete team data to the teamsData array
-        teamsData.push(teamData);
+      try {
+          const groupSnapshot = await getDocs(q);
+          for (const groupDoc of groupSnapshot.docs) {
+              const golferRef = doc(db, `golfTrips/${tripId}/groups/${groupDoc.id}/golfers`, golferId);
+              const golferDoc = await getDoc(golferRef);
+              if (golferDoc.exists()) {
+                  const scorecardRef = collection(golferRef, "scorecards");
+                  const scorecardQuery = query(scorecardRef, where("groupDate", "==", date));
+                  const scorecardSnapshot = await getDocs(scorecardQuery);
+                  const scorecardDoc = scorecardSnapshot.docs[0];
+                  if (scorecardDoc) {
+                      scorecardsDataWithGroupIds.push({
+                          scorecardData: scorecardDoc.data(),
+                          groupId: groupDoc.id,
+                          scorecardId: scorecardDoc.id // Include the scorecard ID here
+                      });
+                  }
+              }
+          }
+          return scorecardsDataWithGroupIds;
+      } catch (error) {
+          console.error("Error fetching scorecard:", error);
+          return [];
       }
-  
-      // Update the state with the fetched team data
-      setTeams(teamsData);
-    } catch (error) {
-      // Handle any errors that occur during the fetch
-      console.error('Error fetching teams and member details:', error);
-    } finally {
-      // Ensure loading state is updated whether the fetch succeeds or fails
-      setLoading(false);
+  }
+    
+  const handleDateClick = async (date, tripId) => {
+    // Keep the original variable name as per your code structure
+    const scorecardsData = await fetchScorecardDataForDate(date, golferId, tripId);
+    
+    console.log("Date clicked:", date);
+    console.log("Trip ID:", tripId);
+    console.log("Scorecards Data:", scorecardsData);
+
+    if (scorecardsData && scorecardsData.length > 0) {
+        const groupId = scorecardsData[0].groupId;
+        const scorecardId = scorecardsData[0].scorecardId; // Correctly extract scorecardId here
+    
+        setScorecardData(scorecardsData[0].scorecardData);
+        setSelectedGroupId(groupId);
+        setSelectedTripId(tripId);
+        setSelectedScorecardId(scorecardId); // Use the extracted scorecardId
+        setIsScorecardVisible(true);
+    } else {
+        console.log("No scorecard data found for the selected date.");
     }
-  };
+};
 
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
 
-    // Define the callback function to handle date selection
-    const handleDateSelect = (date, golfTripId) => {
-      setSelectedDateInfo({ date, golfTripId }); // Update the selected date, trip ID, and group ID
-    };
+    const closeScorecard = () => {
+        setIsScorecardVisible(false);
+      };
 
-    // Callback function to hide the Left Component
-  const handleHideLeftComponent = () => {
-    setShowLeftComponent(false);
-  };
-
-  // Callback function to show the Left Component
-  const handleShowLeftComponent = () => {
-    setShowLeftComponent(true);
-  };
-  
     return (
-      <div className="flex justify-center px-6 py-12 bg-bground-100">
-        <div className="max-w-7xl w-full mx-auto">
-          <div className="flex flex-col md:flex-row md:items-start gap-8">
-            {/* Left Components - Conditionally render the left component based on left component state */}
-              {showLeftComponent && (
-                <div className="flex-shrink-0 w-full md:w-1/3 shadow-md">
-                  <GolferItem golferRef={golferId} />
-                  <GolferTripItem onDateSelect={handleDateSelect} />
-                </div>
-              )}
-
-            {/* Right Components */}
-            <div className="w-full">
-
-            <div className="container mx-auto p-4">
-              <div className="flex justify-center items-center gap-8">
-                {/* First Team Container */}
-                {teams.length > 0 && (
-                  <div className="w-full md:w-1/2">
-                    <div className="mt-4 bg-bground-100 shadow-lg rounded-lg">
-                      <div className="flex items-center justify-between bg-blue-100 text-yellow-100 py-2 px-4 rounded-t-lg">
-                        <h3 className="text-sm sm:text-m lg:text-m font-semibold">{teams[0].teamName}</h3>
-                      </div>
-                      <div className="text-sm sm:text-sm lg:text-m font-medium text-center border-b">
-                        {teams[0].members.map((member, index) => (
-                          <div key={index} className="flex items-center justify-between border-b p-2">
-                            <div className="w-full text-center">{member.golferName}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* VS Separator */}
-                <div className="text-2xl sm:text-3xl font-bold px-4">
-                  VS
-                </div>
-
-                {/* Second Team Container */}
-                {teams.length > 1 && (
-                  <div className="w-full md:w-1/2">
-                    <div className="mt-4 bg-bground-100 shadow-lg rounded-lg">
-                      <div className="flex items-center justify-between bg-blue-100 text-yellow-100 py-2 px-4 rounded-t-lg">
-                        <h3 className="text-sm sm:text-m lg:text-m font-semibold">{teams[1].teamName}</h3>
-                      </div>
-                      <div className="text-sm sm:text-sm lg:text-m font-medium text-center border-b">
-                        {teams[1].members.map((member, index) => (
-                          <div key={index} className="flex items-center justify-between border-b p-2">
-                            <div className="w-full text-center">{member.golferName}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-              {/* Render DateDetails if a date is selected */}
-              {selectedDateInfo.date && (
-                <DateDetails
-                  selectedDate={selectedDateInfo.date}
-                  golferId={golferId}
-                  onHideLeftComponent={handleHideLeftComponent}
-                  onShowLeftComponent={handleShowLeftComponent}
+        <div className="container mx-auto p-4">
+            {isScorecardVisible ? (
+                <ScoreCardDisplay
+                    scorecardData={scorecardData}
+                    tripId={selectedTripId}
+                    groupId={selectedGroupId}
+                    golferId={golferId}
+                    scorecardId={selectedScorecardId}
+                    onClose={closeScorecard}
                 />
-              )}
-            </div>
-          </div>
+            ) : (
+                <>
+                    <GolferProfile golferDetails={golferDetails} isLoading={isLoading} />
+                    {trips.map(trip => {
+                        const dateButtons = generateDateButtons(trip.tripStartDate, trip.tripEndDate, trip.id);
+                        const tripTeam = trip.teamData;
+                        return (
+                            <div key={trip.id} className="border border-blue-100 bg-bground-100 p-4 rounded-lg text-center pt-3">
+                                <h3 className="text-md font-bold text-center text-blue-100">{trip.golfTripName}</h3>
+                                <p className='text-md mt-2 text-center text-pink-100'>
+                                    {trip.tripStartDate} to {trip.tripEndDate}
+                                </p>
+                                {tripTeam && <GolferTeam teamName={tripTeam.teamName} teamMembers={tripTeam.teamMembers} />}
+                                <div className="flex flex-wrap gap-2 mt-4 justify-center">{dateButtons}</div>
+                            </div>
+                        );
+                    })}
+                </>
+            )}
         </div>
-      </div>
     );
-  };
-  
-  export default MyTrips;
+};
+
+export default MyTrips;

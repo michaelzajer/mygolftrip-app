@@ -3,9 +3,9 @@ This page is called from ./pages/Leaderboards.jsx it displays the leaderboard by
 */
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, where } from 'firebase/firestore';
 
-const PRIZE_MONEY = [220, 120, 70]; // Prize money for 1st, 2nd, and 3rd
+const PRIZE_MONEY = [240, 120, 70]; // Prize money for 1st, 2nd, and 3rd
 
 const LeaderboardOverall = () => {
   const [golfers, setGolfers] = useState([]);
@@ -27,6 +27,15 @@ const LeaderboardOverall = () => {
 
           for (let golferDoc of golfersSnapshot.docs) {
             let golferId = golferDoc.id;
+            let golferRef = doc(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/golfers/${golferId}`);
+
+          // Fetch the team name for the golfer
+          const teamsRef = collection(db, `golfTrips/${tripDoc.id}/Teams`); // Adjust the path as needed
+          const q = query(teamsRef, where('teamMembers', 'array-contains', golferRef));
+          const teamSnapshot = await getDocs(q);
+          let teamName = teamSnapshot.docs.length > 0 ? teamSnapshot.docs[0].data().teamName : 'No Team';
+
+
             let golferData = golfersMap.get(golferId) || {
               golferName: golferDoc.data().golferName,
               totalPoints: 0,
@@ -35,6 +44,7 @@ const LeaderboardOverall = () => {
               gaHandicap: 0,
               golferId: golferId,
               groupName: groupName,
+              teamName: teamName
             };
 
             const leaderboardDocRef = doc(db, `golfTrips/${tripDoc.id}/groups/${groupDoc.id}/leaderboard/${golferId}`);
@@ -46,6 +56,7 @@ const LeaderboardOverall = () => {
               golferData.totalScore += leaderboardData.totalScore || 0;
               golferData.dailyHandicap = leaderboardData.dailyHandicap || golferData.dailyHandicap;
               golferData.gaHandicap = leaderboardData.gaHandicap || golferData.gaHandicap;
+              golferData.teamName = teamName; 
             }
 
             golfersMap.set(golferId, golferData);
@@ -70,7 +81,7 @@ const LeaderboardOverall = () => {
       <div className="mb-4 bg-white shadow overflow-hidden rounded-lg">
         <div className="bg-blue-100 text-yellow-100 flex flex-wrap justify-between text-sm font-medium text-center p-2">
           <div className="flex-1 text-center p-2 md:w-1/4">Golfer Name</div>
-          <div className="flex-1 text-center p-2 md:w-1/4">Group Name</div>
+          <div className="flex-1 text-center p-2 md:w-1/4">Team Name</div>
           <div className="flex-1 text-center p-2 md:w-1/6">GA Hcp</div>
           <div className="flex-1 text-center p-2 md:w-1/6">Prize Money</div>
           <div className="flex-1 text-center p-2 md:w-1/6">Total StbFd Points</div>
@@ -79,7 +90,7 @@ const LeaderboardOverall = () => {
         {golfers.map((golfer, index) => (
         <div key={golfer.golferId} className="flex flex-wrap items-center text-center border-b text-sm">
           <div className="flex-1 p-2 md:w-1/4">{golfer.golferName}</div>
-          <div className="flex-1 p-2 md:w-1/4">{golfer.groupName}</div>
+          <div className="flex-1 p-2 md:w-1/4">{golfer.teamName}</div>
           <div className="flex-1 p-2 md:w-1/6">{golfer.gaHandicap}</div>
           <div className="flex-1 p-2 md:w-1/6">{getPrizeMoney(index)}</div> {/* Now passing index */}
           <div className="flex-1 p-2 md:w-1/6">{golfer.totalPoints}</div>

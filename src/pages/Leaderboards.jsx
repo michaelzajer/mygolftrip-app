@@ -12,6 +12,7 @@ import LeaderboardDate from './LeaderboardDate';
 import LeaderboardOverall from './LeaderboardOverall';
 import LeaderboardPairsByDay from './LeaderboardDayPair';
 import LeaderBoardTeam from './LeaderBoardTeam';
+import LeaderboardTeamPoints from './LeaderboardTeamPoints';
 
 const Leaderboards = () => {
 const [trips, setTrips] = useState([]);
@@ -47,6 +48,8 @@ const [trips, setTrips] = useState([]);
             return <LeaderboardPairsByDay />;
         case 'teams':
           return <LeaderBoardTeam />;
+          case 'teamPoints':
+            return <LeaderboardTeamPoints />;
       default:
         return null; // or a welcome message, or anything you want as the default state
     }
@@ -100,6 +103,12 @@ const [trips, setTrips] = useState([]);
             className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white rounded border border-yellow-100 py-1 px-2 font-semibold"
           >
             Team
+          </button>
+          <button
+            onClick={() => setActiveLeaderboard('teamPoints')}
+            className="bg-blue-100 hover:bg-yellow-100 hover:text-blue-100 text-white rounded border border-yellow-100 py-1 px-2 font-semibold"
+          >
+            Team Points
           </button>
           {/* Add additional leaderboard links/buttons here */}
         </div>

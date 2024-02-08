@@ -97,32 +97,30 @@ const LeaderboardPairsByDay = () => {
   }
 
   return (
-    <div>
+    <div className="container mx-auto max-w-6xl">
       {leaderboardData.map((day, index) => (
-        <div key={index} className="my-4 p-4 shadow rounded">
-          <h2 className="text-xl font-semibold">Day {day.dayNo} Pairs - {day.date}</h2>
-          <table className="min-w-full mt-2">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Team</th>
-                <th>Pair</th>
-                <th>Total Points</th>
-                <th>Prize Money</th>
-              </tr>
-            </thead>
-            <tbody>
-              {day.pairs.map((pair, pairIndex) => (
-                <tr key={pair.golfers.map(golfer => golfer.id).join('-')}>
-                  <td>{pairIndex + 1}</td>
-                  <td>{pair.teamName}</td>
-                  <td>{pair.golfers.map(golfer => golferNames[golfer.id] || 'Unknown').join(' & ')}</td>
-                  <td>{pair.totalPoints}</td>
-                  <td>{getPrizeMoney(pairIndex + 1)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div key={index} className="mb-1 bg-bground-100 shadow overflow-hidden rounded-lg">
+          <div className="text-sm font-semibold px-2 text-pink-100">
+            Day {day.dayNo} Pairs - {day.date}
+          </div>
+          <div className="min-w-full leading-normal">
+            <div className="grid grid-cols-5 gap-4 px-5 py-3  bg-blue-100 text-yellow-100 text-xs font-semibold uppercase tracking-wider">
+              <p>Rank</p>
+              <p>Team</p>
+              <p>Pair</p>
+              <p>Total Points</p>
+              <p>Prize Money</p>
+            </div>
+            {day.pairs.map((pair, pairIndex) => (
+              <div key={pair.golfers.map(golfer => golfer.id).join('-')} className="grid grid-cols-5 gap-4 bg-white px-5 py-5 border-b border-gray-200 text-sm">
+                <p>{pairIndex + 1}</p>
+                <p>{pair.teamName}</p>
+                <p>{pair.golfers.map(golfer => golferNames[golfer.id] || 'Unknown').join(' & ')}</p>
+                <p>{pair.totalPoints}</p>
+                <p>{getPrizeMoney(pairIndex + 1)}</p>
+              </div>
+            ))}
+          </div>
         </div>
       ))}
     </div>
